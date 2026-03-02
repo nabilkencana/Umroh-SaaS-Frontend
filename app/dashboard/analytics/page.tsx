@@ -20,6 +20,7 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardLayout>
+      
       <div>
         <h1 className="mb-2 text-3xl font-bold text-[#0F5132]">Analytics Dashboard</h1>
         <p className="mb-8 text-gray-600">Ringkasan performa tenant, jamaah, dan kampanye promo.</p>

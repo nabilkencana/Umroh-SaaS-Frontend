@@ -13,7 +13,9 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
+      
       <div>
+        
         <h1 className="mb-2 text-3xl font-bold text-[#0F5132]">Dashboard</h1>
         <p className="mb-8 text-gray-600">Ringkasan operasional harian travel umroh Anda.</p>
 
