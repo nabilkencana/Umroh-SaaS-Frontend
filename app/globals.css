@@ -19,26 +19,44 @@
 }
 
 body {
-  background: var(--background);
+  background: #f8fafc;
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
 
-/* Islamic Pattern Background */
 .islamic-pattern {
-  background-image: 
+  background-image:
     repeating-linear-gradient(45deg, transparent, transparent 35px, rgba(15, 81, 50, 0.02) 35px, rgba(15, 81, 50, 0.02) 70px),
     repeating-linear-gradient(-45deg, transparent, transparent 35px, rgba(15, 81, 50, 0.02) 35px, rgba(15, 81, 50, 0.02) 70px);
 }
 
-/* Gold Border Animation */
 @keyframes shimmer {
-  0% { background-position: -1000px 0; }
-  100% { background-position: 1000px 0; }
+  0% {
+    background-position: -1000px 0;
+  }
+
+  100% {
+    background-position: 1000px 0;
+  }
 }
 
 .gold-border-shimmer {
   background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
   background-size: 1000px 100%;
   animation: shimmer 3s infinite;
+}
+
+.glass-panel {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.surface-card {
+  border: 1px solid #dbe5df;
+  border-radius: 1rem;
+  background: #fff;
+  box-shadow: 0 10px 25px rgba(15, 81, 50, 0.07);
 }
