@@ -1,0 +1,6 @@
+{
+    "prisma-smart-formatter.typescript.defaultFormatter": "vscode.typescript-language-features",
+    "prisma-smart-formatter.typescriptreact.defaultFormatter": "vscode.typescript-language-features",
+    "kiroAgent.configureMCP": "Disabled",
+    "typescript.autoClosingTags": false
+}
