@@ -27,10 +27,10 @@ export default function AnalyticsPage() {
 
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
           {[
-            { label: 'Total Tenant', value: stats.totalTenants, icon: '🏢', style: 'from-blue-500 to-blue-600' },
-            { label: 'Total Jamaah', value: stats.totalJamaah, icon: '👥', style: 'from-green-500 to-green-600' },
-            { label: 'Promo Aktif', value: stats.activePromos, icon: '🎫', style: 'from-purple-500 to-purple-600' },
-            { label: 'Tracking Hari Ini', value: stats.trackingToday, icon: '📍', style: 'from-orange-500 to-orange-600' },
+            { label: 'Total Tenant', value: stats.totalTenants, style: 'from-blue-500 to-blue-600' },
+            { label: 'Total Jamaah', value: stats.totalJamaah, style: 'from-green-500 to-green-600' },
+            { label: 'Promo Aktif', value: stats.activePromos, style: 'from-purple-500 to-purple-600' },
+            { label: 'Tracking Hari Ini', value: stats.trackingToday, style: 'from-orange-500 to-orange-600' },
           ].map((item) => (
             <div key={item.label} className={`rounded-2xl bg-gradient-to-br ${item.style} p-6 text-white shadow-lg`}>
               <div className="mb-4 flex items-center justify-between">

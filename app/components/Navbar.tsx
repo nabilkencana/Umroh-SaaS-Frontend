@@ -12,7 +12,8 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMenuOpen, 
+    setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
 
@@ -48,12 +49,13 @@ export default function Navbar() {
     }
     return pathname.startsWith(href);
   };
+  
 
   return (
     <>
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
         isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-lg py-3' 
+          ? 'bg-white/95 backdrop-blur-md shadow-lg py-3 ' 
           : 'bg-white py-4'
       }`}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
