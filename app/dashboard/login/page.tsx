@@ -8,21 +8,44 @@ import { EnvelopeIcon, LockClosedIcon, ArrowRightIcon } from '@heroicons/react/2
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@alhijrah.com');
+  const [password, setPassword] = useState('admin123');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError('');
 
-    // Simulasi proses login
-    setTimeout(() => {
+    try {
+      const { authService } = await import('@/services/auth.service');
+      const response = await authService.login(email, password);
+      console.log('Login successful:', response.user);
+
+      // Store user info in localStorage
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('user_role', response.user.role);
+        localStorage.setItem('user_name', response.user.name);
+        localStorage.setItem('tenant_id', response.user.tenant_id);
+      }
+
+      // Redirect based on role
+      if (response.user.role === 'JAMAAH' || response.user.role === 'KELUARGA') {
+        // Redirect to jamaah dashboard
+        router.push('/dashboard/jamaah-profile');
+      } else {
+        // Redirect to admin dashboard (SUPER_ADMIN, ADMIN_CABANG, PEMBIMBING)
+        router.push('/dashboard');
+      }
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError(err.response?.data?.message || 'Login gagal. Periksa email dan password Anda.');
+    } finally {
       setIsLoading(false);
-      router.push('/dashboard');
-    }, 1500);
+    }
   };
 
   const handleGoogleLogin = () => {
@@ -113,6 +136,17 @@ export default function LoginPage() {
               </h1>
               <p className="text-gray-600 mt-2">Silakan login untuk melanjutkan</p>
             </div>
+
+            {/* Error Message */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-4 rounded-xl bg-red-50 border border-red-200 p-3 text-sm text-red-700"
+              >
+                {error}
+              </motion.div>
+            )}
 
             {/* Google Login Button */}
             <motion.button

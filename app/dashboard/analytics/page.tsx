@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { mockJamaah, mockPromos, mockTenants } from '@/lib/mock-data';
+import { analyticsService } from '@/services/analytics.service';
+import { promoService } from '@/services/promo.service';
+import { jamaahService } from '@/services/jamaah.service';
 import { motion } from 'framer-motion';
 import {
   BuildingOfficeIcon,
@@ -86,32 +88,65 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('6months');
   const [selectedChart, setSelectedChart] = useState('line');
   const [isClient, setIsClient] = useState(false);
+  const [stats, setStats] = useState({
+    total_tenants: 0,
+    total_jamaah: 0,
+    total_promos: 0,
+    total_tracking_logs: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  // Load analytics data
+  useEffect(() => {
+    const loadAnalytics = async () => {
+      try {
+        const data = await analyticsService.getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error('Failed to load analytics:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadAnalytics();
+  }, []);
 
   // Data untuk performa promo (dibuat di dalam komponen)
-  const [perfRows, setPerfRows] = useState(() =>
-    mockPromos.map((promo, index) => {
-      const baseViews = 650 + (index + 1) * 137;
-      const clicks = Math.floor(baseViews * (0.28 + index * 0.03));
-      const conversion = ((clicks / baseViews) * 100).toFixed(1);
-      return {
-        id: promo.id,
-        title: promo.title,
-        views: baseViews,
-        clicks,
-        conversion,
-        revenue: baseViews * 15000 // Dummy revenue
-      };
-    })
-  );
+  const [perfRows, setPerfRows] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadPromos = async () => {
+      try {
+        const promos = await promoService.getAll();
+        const rows = promos.map((promo, index) => {
+          const baseViews = 650 + (index + 1) * 137;
+          const clicks = Math.floor(baseViews * (0.28 + index * 0.03));
+          const conversion = ((clicks / baseViews) * 100).toFixed(1);
+          return {
+            id: promo.id,
+            title: promo.title,
+            views: baseViews,
+            clicks,
+            conversion,
+            revenue: baseViews * 15000
+          };
+        });
+        setPerfRows(rows);
+      } catch (error) {
+        console.error('Failed to load promos:', error);
+      }
+    };
+    loadPromos();
+  }, []);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const stats = [
+  const statsCards = [
     {
       label: 'Total Tenant',
-      value: mockTenants.length,
+      value: stats.total_tenants,
       icon: BuildingOfficeIcon,
       color: 'from-blue-600 to-blue-400',
       bgColor: 'bg-blue-50',
@@ -121,7 +156,7 @@ export default function AnalyticsPage() {
     },
     {
       label: 'Total Jamaah',
-      value: mockJamaah.length,
+      value: stats.total_jamaah,
       icon: UsersIcon,
       color: 'from-green-600 to-green-400',
       bgColor: 'bg-green-50',
@@ -131,7 +166,7 @@ export default function AnalyticsPage() {
     },
     {
       label: 'Promo Aktif',
-      value: mockPromos.filter((p) => p.is_active).length,
+      value: stats.total_promos,
       icon: TicketIcon,
       color: 'from-purple-600 to-purple-400',
       bgColor: 'bg-purple-50',
@@ -141,7 +176,7 @@ export default function AnalyticsPage() {
     },
     {
       label: 'Tracking Hari Ini',
-      value: 12,
+      value: stats.total_tracking_logs,
       icon: MapPinIcon,
       color: 'from-orange-600 to-orange-400',
       bgColor: 'bg-orange-50',
@@ -168,7 +203,7 @@ export default function AnalyticsPage() {
   };
 
   // Render versi statis untuk server
-  if (!isClient) {
+  if (!isClient || loading) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -237,7 +272,7 @@ export default function AnalyticsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {stats.map((stat, index) => {
+          {statsCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <motion.div
@@ -295,8 +330,8 @@ export default function AnalyticsPage() {
                 <button
                   onClick={() => setSelectedChart('line')}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${selectedChart === 'line'
-                      ? 'bg-[#0F5132] text-white shadow-md shadow-[#0F5132]/30'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-[#0F5132] text-white shadow-md shadow-[#0F5132]/30'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                 >
                   Line Chart
@@ -304,8 +339,8 @@ export default function AnalyticsPage() {
                 <button
                   onClick={() => setSelectedChart('area')}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${selectedChart === 'area'
-                      ? 'bg-[#0F5132] text-white shadow-md shadow-[#0F5132]/30'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    ? 'bg-[#0F5132] text-white shadow-md shadow-[#0F5132]/30'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
                 >
                   Area Chart

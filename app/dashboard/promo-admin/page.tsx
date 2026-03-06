@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { mockPromos } from '@/lib/mock-data';
+import { promoService } from '@/services/promo.service';
+import { Promo } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   PlusIcon,
@@ -24,20 +25,6 @@ import {
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
 
-interface Promo {
-  id: string;
-  title: string;
-  discount_percentage: number;
-  start_date?: string;
-  end_date?: string;
-  is_active: boolean;
-  is_featured?: boolean;
-  description?: string;
-  code?: string;
-  max_uses?: number;
-  used_count?: number;
-}
-
 export default function PromoAdminPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingPromo, setEditingPromo] = useState<Promo | null>(null);
@@ -45,8 +32,24 @@ export default function PromoAdminPage() {
   const [filterStatus, setFilterStatus] = useState('all');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
+  const [promos, setPromos] = useState<Promo[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const promos = mockPromos as Promo[];
+  // Load promos from backend
+  useEffect(() => {
+    loadPromos();
+  }, []);
+
+  const loadPromos = async () => {
+    try {
+      const data = await promoService.getAll();
+      setPromos(data);
+    } catch (error) {
+      console.error('Failed to load promos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredPromos = promos.filter(promo =>
     promo.title.toLowerCase().includes(searchTerm.toLowerCase()) &&
@@ -64,6 +67,19 @@ export default function PromoAdminPage() {
   const handleDelete = (promo: Promo) => {
     setSelectedPromo(promo);
     setShowDeleteModal(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedPromo) return;
+    try {
+      await promoService.delete(selectedPromo.id);
+      await loadPromos();
+      setShowDeleteModal(false);
+      setSelectedPromo(null);
+    } catch (error) {
+      console.error('Failed to delete promo:', error);
+      alert('Gagal menghapus promo');
+    }
   };
 
   const handleCloseForm = () => {
@@ -120,11 +136,7 @@ export default function PromoAdminPage() {
                 Batal
               </button>
               <button
-                onClick={() => {
-                  // Handle delete logic here
-                  setShowDeleteModal(false);
-                  setSelectedPromo(null);
-                }}
+                onClick={confirmDelete}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
               >
                 Hapus
@@ -295,6 +307,19 @@ export default function PromoAdminPage() {
       )}
     </AnimatePresence>
   );
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5132] mx-auto mb-4"></div>
+            <p className="text-gray-600">Memuat data promo...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

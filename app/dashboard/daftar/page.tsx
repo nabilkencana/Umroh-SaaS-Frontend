@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { authService } from '@/services/auth.service';
 import {
     EnvelopeIcon,
     LockClosedIcon,
@@ -11,7 +12,8 @@ import {
     PhoneIcon,
     BuildingOfficeIcon,
     ArrowRightIcon,
-    CheckCircleIcon
+    CheckCircleIcon,
+    ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 
 export default function SignupPage() {
@@ -29,6 +31,8 @@ export default function SignupPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [agreed, setAgreed] = useState(false);
+    const [error, setError] = useState('');
+    const [success, setSuccess] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -37,15 +41,34 @@ export default function SignupPage() {
         });
     };
 
-    const handleSignup = (e: React.FormEvent) => {
+    const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
+        setError('');
         setIsLoading(true);
 
-        // Simulasi proses registrasi
-        setTimeout(() => {
+        try {
+            // Register user with backend - default role is JAMAAH
+            await authService.register({
+                email: formData.email,
+                password: formData.password,
+                name: formData.name,
+                tenant_name: formData.company,
+                phone: formData.phone,
+                role: 'JAMAAH', // Default role for new registration
+            });
+
+            // Show success message
+            setSuccess(true);
+
+            // Redirect to login after 2 seconds
+            setTimeout(() => {
+                router.push('/dashboard/login?registered=true');
+            }, 2000);
+        } catch (err: any) {
+            console.error('Registration error:', err);
+            setError(err.response?.data?.message || 'Gagal mendaftar. Silakan coba lagi.');
             setIsLoading(false);
-            router.push('/dashboard');
-        }, 1500);
+        }
     };
 
     const handleGoogleSignup = () => {
@@ -151,6 +174,36 @@ export default function SignupPage() {
                             </h1>
                             <p className="text-gray-600 mt-2">Isi data Anda untuk memulai</p>
                         </div>
+
+                        {/* Success Message */}
+                        {success && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl flex items-start gap-3"
+                            >
+                                <CheckCircleIcon className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-semibold text-green-800">Pendaftaran Berhasil!</p>
+                                    <p className="text-xs text-green-600 mt-1">Anda akan diarahkan ke halaman login...</p>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* Error Message */}
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3"
+                            >
+                                <ExclamationCircleIcon className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="text-sm font-semibold text-red-800">Pendaftaran Gagal</p>
+                                    <p className="text-xs text-red-600 mt-1">{error}</p>
+                                </div>
+                            </motion.div>
+                        )}
 
                         {/* Google Sign Up Button */}
                         <motion.button

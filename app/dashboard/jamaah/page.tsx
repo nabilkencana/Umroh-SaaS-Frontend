@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '../../components/DashboardLayout';
-import { mockJamaah } from '@/lib/mock-data';
+import { jamaahService } from '@/services/jamaah.service';
 import { Jamaah } from '@/lib/types';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -30,7 +31,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function JamaahPage() {
-  const [jamaahList] = useState<Jamaah[]>(mockJamaah);
+  const router = useRouter();
+  const [jamaahList, setJamaahList] = useState<Jamaah[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [selectedJamaah, setSelectedJamaah] = useState<Jamaah | null>(null);
@@ -38,6 +40,36 @@ export default function JamaahPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Load jamaah from backend
+  useEffect(() => {
+    loadJamaah();
+  }, []);
+
+  const loadJamaah = async () => {
+    try {
+      const data = await jamaahService.getAll();
+      setJamaahList(data);
+    } catch (error) {
+      console.error('Failed to load jamaah:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedJamaah) return;
+    try {
+      await jamaahService.delete(selectedJamaah.id);
+      await loadJamaah();
+      setShowDeleteModal(false);
+      setSelectedJamaah(null);
+    } catch (error) {
+      console.error('Failed to delete jamaah:', error);
+      alert('Gagal menghapus jamaah');
+    }
+  };
 
   const filteredJamaah = jamaahList.filter(
     (j) =>
@@ -199,10 +231,15 @@ export default function JamaahPage() {
 
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <div className="flex items-center gap-2 text-gray-600 mb-2">
-                    <CalendarIcon className="w-4 h-4" />
-                    <span className="text-xs">Tanggal Lahir</span>
+                    <CheckCircleIcon className="w-4 h-4" />
+                    <span className="text-xs">Status Verifikasi</span>
                   </div>
-                  <p className="font-semibold">{selectedJamaah.birth_date || '-'}</p>
+                  <p className={`font-semibold capitalize ${(selectedJamaah as any).verification_status === 'verified' ? 'text-green-600' :
+                      (selectedJamaah as any).verification_status === 'rejected' ? 'text-red-600' :
+                        'text-yellow-600'
+                    }`}>
+                    {(selectedJamaah as any).verification_status || 'pending'}
+                  </p>
                 </div>
 
                 <div className="col-span-2 bg-gray-50 p-4 rounded-xl">
@@ -213,6 +250,50 @@ export default function JamaahPage() {
                   <p className="font-semibold">{selectedJamaah.address || '-'}</p>
                 </div>
               </div>
+
+              {/* Verification Buttons */}
+              {(selectedJamaah as any).verification_status === 'pending' && (
+                <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
+                  <p className="text-sm text-yellow-800 mb-3">Jamaah ini menunggu verifikasi</p>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const adminName = localStorage.getItem('user_name') || 'Admin';
+                          await jamaahService.verify(selectedJamaah.id, 'verified', adminName);
+                          alert('Jamaah berhasil diverifikasi!');
+                          setShowDetailModal(false);
+                          loadJamaah();
+                        } catch (error) {
+                          alert('Gagal memverifikasi jamaah');
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      ✓ Verifikasi
+                    </button>
+                    <button
+                      onClick={async () => {
+                        const reason = prompt('Alasan penolakan:');
+                        if (reason) {
+                          try {
+                            const adminName = localStorage.getItem('user_name') || 'Admin';
+                            await jamaahService.verify(selectedJamaah.id, 'rejected', adminName, reason);
+                            alert('Jamaah ditolak');
+                            setShowDetailModal(false);
+                            loadJamaah();
+                          } catch (error) {
+                            alert('Gagal menolak jamaah');
+                          }
+                        }
+                      }}
+                      className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      ✗ Tolak
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex gap-3">
@@ -278,11 +359,7 @@ export default function JamaahPage() {
                 Batal
               </button>
               <button
-                onClick={() => {
-                  // Handle delete logic here
-                  setShowDeleteModal(false);
-                  setSelectedJamaah(null);
-                }}
+                onClick={handleDeleteConfirm}
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors"
               >
                 Hapus
@@ -449,6 +526,19 @@ export default function JamaahPage() {
     </AnimatePresence>
   );
 
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5132] mx-auto mb-4"></div>
+            <p className="text-gray-600">Memuat data jamaah...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <motion.div
@@ -478,7 +568,7 @@ export default function JamaahPage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowAddModal(true)}
+              onClick={() => router.push('/dashboard/jamaah/daftar')}
               className="px-6 py-3 bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] text-white rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-[#0F5132]/20"
             >
               <PlusIcon className="w-5 h-5" />

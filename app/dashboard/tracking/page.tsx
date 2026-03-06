@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { mockJamaah } from '@/lib/mock-data';
+import { jamaahService } from '@/services/jamaah.service';
+import { trackingService } from '@/services/tracking.service';
 import { SPIRITUAL_LOCATIONS } from '@/lib/constants';
 import { motion, AnimatePresence } from 'framer-motion';
 import dynamic from 'next/dynamic';
+import { io, Socket } from 'socket.io-client';
 import {
   MapPinIcon,
   UserGroupIcon,
@@ -51,17 +53,10 @@ interface TrackingData {
   battery?: number;
 }
 
+const WS_URL = process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
+
 // Data statis untuk server render
-const staticInitialTracking: TrackingData[] = mockJamaah.map((j) => ({
-  jamaah_id: j.id,
-  name: j.full_name,
-  latitude: SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat,
-  longitude: SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lng,
-  status: 'active',
-  last_update: new Date().toISOString(),
-  accuracy: 10,
-  battery: 100,
-}));
+const staticInitialTracking: TrackingData[] = [];
 
 export default function TrackingPage() {
   const [trackingData, setTrackingData] = useState<TrackingData[]>(staticInitialTracking);
@@ -72,25 +67,90 @@ export default function TrackingPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isClient, setIsClient] = useState(false);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Inisialisasi data random hanya di client
+  // Load jamaah and tracking data from backend
   useEffect(() => {
-    setIsClient(true);
-    setTrackingData(
-      mockJamaah.map((j) => ({
-        jamaah_id: j.id,
-        name: j.full_name,
-        latitude: SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat + (Math.random() - 0.5) * 0.1,
-        longitude: SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lng + (Math.random() - 0.5) * 0.1,
-        status: 'active',
-        last_update: new Date().toISOString(),
-        accuracy: Math.floor(Math.random() * 20) + 5,
-        battery: Math.floor(Math.random() * 100),
-      }))
-    );
+    const loadData = async () => {
+      try {
+        const [jamaahData, trackingLogs] = await Promise.all([
+          jamaahService.getAll(),
+          trackingService.getAll()
+        ]);
+
+        // Create tracking data from jamaah and latest tracking logs
+        const tracking = jamaahData.map((j) => {
+          const latestLog = trackingLogs.find(log => log.jamaah_id === j.id);
+          return {
+            jamaah_id: j.id,
+            name: j.full_name,
+            latitude: latestLog?.latitude || SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat + (Math.random() - 0.5) * 0.1,
+            longitude: latestLog?.longitude || SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lng + (Math.random() - 0.5) * 0.1,
+            status: latestLog?.status || 'active',
+            last_update: latestLog?.created_at || new Date().toISOString(),
+            accuracy: Math.floor(Math.random() * 20) + 5,
+            battery: Math.floor(Math.random() * 100),
+          };
+        });
+
+        setTrackingData(tracking);
+      } catch (error) {
+        console.error('Failed to load tracking data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
   }, []);
 
+  // Setup WebSocket connection
   useEffect(() => {
+    setIsClient(true);
+
+    const newSocket = io(WS_URL);
+
+    newSocket.on('connect', () => {
+      console.log('WebSocket connected');
+      // Join tenant room (use tenant_id from localStorage or default)
+      const tenantId = localStorage.getItem('tenant_id') || 'tenant-1';
+      newSocket.emit('join', { tenant_id: tenantId });
+    });
+
+    newSocket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+    });
+
+    newSocket.on('tracking_update', (data) => {
+      console.log('Tracking update received:', data);
+      setTrackingData((prev) => {
+        const index = prev.findIndex(t => t.jamaah_id === data.jamaah_id);
+        if (index >= 0) {
+          const updated = [...prev];
+          updated[index] = {
+            ...updated[index],
+            latitude: data.latitude,
+            longitude: data.longitude,
+            status: data.status,
+            last_update: new Date().toISOString(),
+          };
+          return updated;
+        }
+        return prev;
+      });
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, []);
+
+  // Simulate location updates (for demo purposes)
+  useEffect(() => {
+    if (!isClient) return;
+
     const interval = setInterval(() => {
       setTrackingData((prev) =>
         prev.map((t) => ({
@@ -106,7 +166,7 @@ export default function TrackingPage() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isClient]);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
@@ -231,8 +291,8 @@ export default function TrackingPage() {
                     key={option.value}
                     onClick={() => setFilterLocation(option.value)}
                     className={`py-2 px-3 rounded-xl text-sm font-medium transition-colors ${filterLocation === option.value
-                        ? `bg-${option.color}-100 text-${option.color}-700 border-2 border-${option.color}-200`
-                        : 'bg-gray-50 text-gray-700 border border-gray-200'
+                      ? `bg-${option.color}-100 text-${option.color}-700 border-2 border-${option.color}-200`
+                      : 'bg-gray-50 text-gray-700 border border-gray-200'
                       }`}
                   >
                     {option.label}
@@ -295,10 +355,10 @@ export default function TrackingPage() {
 
               <div className="flex justify-center">
                 <span className={`px-4 py-2 rounded-full text-sm font-semibold ${Math.abs(selectedJamaah.latitude - SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat) < 0.1
-                    ? 'bg-emerald-100 text-emerald-700'
-                    : Math.abs(selectedJamaah.latitude - SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lat) < 0.1
-                      ? 'bg-purple-100 text-purple-700'
-                      : 'bg-blue-100 text-blue-700'
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : Math.abs(selectedJamaah.latitude - SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lat) < 0.1
+                    ? 'bg-purple-100 text-purple-700'
+                    : 'bg-blue-100 text-blue-700'
                   }`}>
                   {Math.abs(selectedJamaah.latitude - SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat) < 0.1
                     ? '📍 Di Makkah'
@@ -321,7 +381,7 @@ export default function TrackingPage() {
                   <p className="text-xs text-gray-500">Akurasi</p>
                   <div className="flex items-center gap-1">
                     <WifiIcon className={`w-4 h-4 ${(selectedJamaah.accuracy || 0) < 10 ? 'text-green-500' :
-                        (selectedJamaah.accuracy || 0) < 20 ? 'text-yellow-500' : 'text-red-500'
+                      (selectedJamaah.accuracy || 0) < 20 ? 'text-yellow-500' : 'text-red-500'
                       }`} />
                     <span className="font-medium">{selectedJamaah.accuracy}m</span>
                   </div>
@@ -330,7 +390,7 @@ export default function TrackingPage() {
                   <p className="text-xs text-gray-500">Baterai</p>
                   <div className="flex items-center gap-1">
                     <Battery100Icon className={`w-4 h-4 ${(selectedJamaah.battery || 0) > 60 ? 'text-green-500' :
-                        (selectedJamaah.battery || 0) > 20 ? 'text-yellow-500' : 'text-red-500'
+                      (selectedJamaah.battery || 0) > 20 ? 'text-yellow-500' : 'text-red-500'
                       }`} />
                     <span className="font-medium">{selectedJamaah.battery}%</span>
                   </div>
@@ -362,7 +422,7 @@ export default function TrackingPage() {
   );
 
   // Jika belum di client, render versi statis
-  if (!isClient) {
+  if (!isClient || loading) {
     return (
       <DashboardLayout>
         <div className="space-y-4 md:space-y-6">
@@ -375,7 +435,12 @@ export default function TrackingPage() {
                 </h1>
               </div>
             </div>
-            <div className="h-[400px] bg-gray-100 rounded-xl animate-pulse" />
+            <div className="h-[400px] bg-gray-100 rounded-xl animate-pulse flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5132] mx-auto mb-4"></div>
+                <p className="text-gray-600">Memuat data tracking...</p>
+              </div>
+            </div>
           </div>
         </div>
       </DashboardLayout>
@@ -574,8 +639,8 @@ export default function TrackingPage() {
                         <div className="flex items-center justify-between">
                           <p className="font-semibold text-gray-900 truncate">{track.name}</p>
                           <span className={`text-xs px-2 py-1 rounded-full ${isNearMakkah ? 'bg-emerald-100 text-emerald-700' :
-                              isNearMadinah ? 'bg-purple-100 text-purple-700' :
-                                'bg-blue-100 text-blue-700'
+                            isNearMadinah ? 'bg-purple-100 text-purple-700' :
+                              'bg-blue-100 text-blue-700'
                             }`}>
                             {isNearMakkah ? 'Makkah' : isNearMadinah ? 'Madinah' : 'Perjalanan'}
                           </span>
@@ -647,8 +712,8 @@ export default function TrackingPage() {
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-3 py-1 rounded-full text-xs font-semibold ${isNearMakkah ? 'bg-emerald-100 text-emerald-700' :
-                              isNearMadinah ? 'bg-purple-100 text-purple-700' :
-                                'bg-blue-100 text-blue-700'
+                            isNearMadinah ? 'bg-purple-100 text-purple-700' :
+                              'bg-blue-100 text-blue-700'
                             }`}>
                             {isNearMakkah ? 'Makkah' : isNearMadinah ? 'Madinah' : 'Dalam Perjalanan'}
                           </span>
