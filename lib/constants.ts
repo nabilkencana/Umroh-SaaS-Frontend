@@ -8,17 +8,30 @@ export const COLORS = {
 
 export const SPIRITUAL_LOCATIONS = {
     MASJID_AL_HARAM: {
-        name: 'Masjid al-Haram',
-        city: 'Makkah',
+        name: 'Masjid Al-Haram',
         lat: 21.4225,
         lng: 39.8262,
+        city: 'Makkah'
     },
-    MASJID_AN_NABAWI: {
-        name: 'Masjid an-Nabawi',
-        city: 'Madinah',
+    MASJID_AL_NABAWI: {
+        name: 'Masjid Nabawi',
         lat: 24.4672,
         lng: 39.6111,
+        city: 'Madinah'
     },
+    // Tambahan lokasi lain jika diperlukan
+    JABAL_NUR: {
+        name: 'Jabal Nur',
+        lat: 21.4575,
+        lng: 39.8575,
+        city: 'Makkah'
+    },
+    JABAL_RAHMAH: {
+        name: 'Jabal Rahmah',
+        lat: 21.2144,
+        lng: 39.9681,
+        city: 'Arafah'
+    }
 } as const;
 
 export const SUBSCRIPTION_PLANS = {

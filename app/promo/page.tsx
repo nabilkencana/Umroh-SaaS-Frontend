@@ -6,14 +6,16 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
-import { mockPromos, mockTenants } from '@/lib/mock-data';
+import { mockTenants } from '@/lib/mock-data';
+import { promoService } from '@/services/promo.service';
+import { Promo } from '@/lib/types';
 
 // Fungsi helper untuk format Rupiah dengan aman
 const formatRupiah = (value) => {
   if (!value || isNaN(value)) return 'Rp 34.000.000'; // Default value jika input tidak valid
-  return new Intl.NumberFormat('id-ID', { 
-    style: 'currency', 
-    currency: 'IDR', 
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0
   }).format(value);
@@ -71,7 +73,7 @@ const PromoCard = ({ promo }) => {
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             priority
           />
-          
+
           {/* Badge Diskon */}
           <div className="absolute top-4 left-4 z-10">
             <span className="bg-[#D4AF37] text-[#0F5132] text-sm font-bold px-3 py-1 rounded-full">
@@ -169,11 +171,28 @@ export default function PromoPage() {
   const [selectedTenant, setSelectedTenant] = useState<string>('all');
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [promos, setPromos] = useState<Promo[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const featuredPromo = useMemo(() => mockPromos.find((p) => p.is_featured), []);
+  // Load promos from backend
+  useEffect(() => {
+    const loadPromos = async () => {
+      try {
+        const data = await promoService.getAll({ is_active: true });
+        setPromos(data);
+      } catch (error) {
+        console.error('Failed to load promos:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPromos();
+  }, []);
+
+  const featuredPromo = useMemo(() => promos.find((p) => p.is_featured), [promos]);
   const filteredPromos = useMemo(
-    () => (selectedTenant === 'all' ? mockPromos : mockPromos.filter((p) => p.tenant_id === selectedTenant)),
-    [selectedTenant],
+    () => (selectedTenant === 'all' ? promos : promos.filter((p) => p.tenant_id === selectedTenant)),
+    [selectedTenant, promos],
   );
 
   useEffect(() => {
@@ -196,6 +215,21 @@ export default function PromoPage() {
     const timer = setInterval(updateCountdown, 1000);
     return () => clearInterval(timer);
   }, [featuredPromo]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white overflow-x-hidden">
+        <Navbar />
+        <div className="flex-grow flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0F5132] mx-auto mb-4"></div>
+            <p className="text-gray-600">Memuat promo...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gradient-to-b from-slate-50 to-white overflow-x-hidden">
@@ -220,7 +254,7 @@ export default function PromoPage() {
           <div className="relative z-10 mx-auto max-w-5xl px-4 py-20 text-center text-white">
             <div className="space-y-6">
               {/* Badge */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="inline-block"
@@ -231,7 +265,7 @@ export default function PromoPage() {
               </motion.div>
 
               {/* Main Title */}
-              <motion.h1 
+              <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
@@ -241,7 +275,7 @@ export default function PromoPage() {
               </motion.h1>
 
               {/* Description */}
-              <motion.p 
+              <motion.p
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.2 }}
@@ -251,7 +285,7 @@ export default function PromoPage() {
               </motion.p>
 
               {/* BERAKHIR DALAM */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -262,8 +296,8 @@ export default function PromoPage() {
                 </p>
               </motion.div>
 
-              {/* Countdown Timer */}
-              <motion.div 
+              {/* Countdown Timer - Enhanced Version */}
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4 }}
@@ -274,16 +308,68 @@ export default function PromoPage() {
                   { label: 'Jam', value: countdown.hours },
                   { label: 'Menit', value: countdown.minutes },
                   { label: 'Detik', value: countdown.seconds },
-                ].map((item) => (
-                  <div key={item.label} className="text-center">
-                    <div className="text-4xl md:text-5xl lg:text-6xl font-black text-[#D4AF37]">
-                      {String(item.value).padStart(2, '0')}
+                ].map((item, index) => (
+                  <div key={item.label} className="text-center group">
+                    {/* Card dengan background premium */}
+                    <div className="relative">
+                      {/* Background glow effect */}
+                      <div className="absolute inset-0 bg-[#D4AF37]/20 rounded-2xl blur-xl group-hover:bg-[#D4AF37]/30 transition-all duration-300" />
+
+                      {/* Main card dengan multiple layers */}
+                      <div className="relative bg-gradient-to-b from-[#2A2A2A] to-[#1A1A1A] rounded-2xl p-4 md:p-6 min-w-[90px] md:min-w-[110px] shadow-2xl border border-[#D4AF37]/30 group-hover:border-[#D4AF37]/60 transition-all duration-300">
+
+                        {/* Inner shine effect */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent rounded-2xl" />
+
+                        {/* Angka dengan efek 3D */}
+                        <div className="relative">
+                          {/* Shadow angka untuk efek depth */}
+                          <div className="absolute inset-0 text-4xl md:text-5xl lg:text-6xl font-black text-black/20 blur-sm translate-y-1">
+                            {String(item.value).padStart(2, '0')}
+                          </div>
+
+                          {/* Angka utama dengan gradient emas */}
+                          <div className="relative text-4xl md:text-5xl lg:text-6xl font-black bg-gradient-to-b from-[#D4AF37] to-[#B49450] bg-clip-text text-transparent drop-shadow-lg">
+                            {String(item.value).padStart(2, '0')}
+                          </div>
+                        </div>
+
+                        {/* Label dengan background transparan */}
+                        <div className="relative mt-2 text-sm md:text-base font-medium">
+                          <span className="text-white/90 group-hover:text-[#D4AF37] transition-colors duration-300">
+                            {item.label}
+                          </span>
+                        </div>
+
+                        {/* Decorative corner accents */}
+                        <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#D4AF37]/40 rounded-tl-lg" />
+                        <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#D4AF37]/40 rounded-br-lg" />
+                      </div>
                     </div>
-                    <div className="text-sm md:text-base text-white/80 font-medium mt-1">
-                      {item.label}
-                    </div>
+
+                    {/* Connector line untuk efek berantai (kecuali item terakhir) */}
+                    {index < 3 && (
+                      <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2">
+                        <div className="w-2 h-2 bg-[#D4AF37]/40 rounded-full" />
+                      </div>
+                    )}
                   </div>
                 ))}
+              </motion.div>
+
+              {/* Additional decorative element - Timer Progress Bar */}
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ delay: 0.6, duration: 0.8 }}
+                className="max-w-md mx-auto mt-8 h-1 bg-white/10 rounded-full overflow-hidden"
+              >
+                <motion.div
+                  className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F5D742]"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "75%" }} // Sesuaikan dengan progress timer
+                  transition={{ delay: 0.8, duration: 1 }}
+                />
               </motion.div>
 
               {/* CTA Button */}
@@ -311,7 +397,7 @@ export default function PromoPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="hidden sm:inline font-semibold text-[#0F5132]">Filter Travel:</span>
-              
+
               <button
                 onClick={() => setIsFilterOpen(!isFilterOpen)}
                 className="sm:hidden flex items-center gap-2 rounded-lg bg-emerald-50 px-4 py-2 text-[#0F5132]"
@@ -339,7 +425,7 @@ export default function PromoPage() {
               </select>
             </div>
 
-            <motion.div 
+            <motion.div
               key={filteredPromos.length}
               initial={{ scale: 0.8 }}
               animate={{ scale: 1 }}
@@ -365,11 +451,10 @@ export default function PromoPage() {
                         setSelectedTenant('all');
                         setIsFilterOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                        selectedTenant === 'all' 
-                          ? 'bg-[#0F5132] text-white' 
-                          : 'bg-gray-50 text-gray-700 hover:bg-emerald-50'
-                      }`}
+                      className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${selectedTenant === 'all'
+                        ? 'bg-[#0F5132] text-white'
+                        : 'bg-gray-50 text-gray-700 hover:bg-emerald-50'
+                        }`}
                     >
                       Semua Travel
                     </button>
@@ -380,11 +465,10 @@ export default function PromoPage() {
                           setSelectedTenant(tenant.id);
                           setIsFilterOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${
-                          selectedTenant === tenant.id 
-                            ? 'bg-[#0F5132] text-white' 
-                            : 'bg-gray-50 text-gray-700 hover:bg-emerald-50'
-                        }`}
+                        className={`w-full text-left px-4 py-2 rounded-lg transition-colors ${selectedTenant === tenant.id
+                          ? 'bg-[#0F5132] text-white'
+                          : 'bg-gray-50 text-gray-700 hover:bg-emerald-50'
+                          }`}
                       >
                         {tenant.name}
                       </button>
@@ -404,7 +488,7 @@ export default function PromoPage() {
           backgroundImage: `radial-gradient(circle at 2px 2px, #0F5132 1px, transparent 0)`,
           backgroundSize: '40px 40px'
         }} />
-        
+
         {/* Floating Elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute top-20 left-10 w-64 h-64 bg-emerald-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob" />
@@ -413,7 +497,7 @@ export default function PromoPage() {
 
         <div className="container relative z-10 mx-auto px-4">
           {/* Section Title */}
-          <motion.div 
+          <motion.div
             className="text-center mb-12"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -432,7 +516,7 @@ export default function PromoPage() {
 
           {/* Promo Cards Grid */}
           {filteredPromos.length === 0 ? (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               className="text-center py-20"
@@ -476,7 +560,7 @@ export default function PromoPage() {
           backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
           backgroundSize: '40px 40px'
         }} />
-        
+
         <div className="relative container mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -490,7 +574,7 @@ export default function PromoPage() {
             <p className="text-emerald-100 mb-8">
               Berlangganan newsletter kami untuk mendapatkan notifikasi promo spesial langsung di email Anda
             </p>
-            
+
             <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
               <input
                 type="email"
