@@ -21,6 +21,8 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function DashboardPage() {
+  const [selectedPeriod, setSelectedPeriod] = useState('Minggu Ini');
+  const [selectedMetric, setSelectedMetric] = useState('Total Jamaah');
   const [greeting, setGreeting] = useState('');
 
   useEffect(() => {
@@ -30,6 +32,26 @@ export default function DashboardPage() {
     else if (hour < 18) setGreeting('Selamat Sore');
     else setGreeting('Selamat Malam');
   }, []);
+
+  // Data dummy untuk aktivitas mingguan
+  const weeklyActivityData = [
+    { day: 'Sen', registrations: 12, tracking: 45, payments: 8, total: 65 },
+    { day: 'Sel', registrations: 15, tracking: 52, payments: 10, total: 77 },
+    { day: 'Rab', registrations: 8, tracking: 38, payments: 6, total: 52 },
+    { day: 'Kam', registrations: 18, tracking: 58, payments: 12, total: 88 },
+    { day: 'Jum', registrations: 22, tracking: 63, payments: 15, total: 100 },
+    { day: 'Sab', registrations: 10, tracking: 48, payments: 7, total: 65 },
+    { day: 'Min', registrations: 5, tracking: 35, payments: 4, total: 44 },
+  ];
+
+  // Statistik tambahan
+  const activityStats = {
+    totalRegistrations: weeklyActivityData.reduce((acc, day) => acc + day.registrations, 0),
+    totalTracking: weeklyActivityData.reduce((acc, day) => acc + day.tracking, 0),
+    totalPayments: weeklyActivityData.reduce((acc, day) => acc + day.payments, 0),
+    averagePerDay: Math.round(weeklyActivityData.reduce((acc, day) => acc + day.total, 0) / 7),
+    peakDay: weeklyActivityData.reduce((max, day) => day.total > max.total ? day : max).day,
+  };
 
   const stats = [
     {
@@ -319,35 +341,145 @@ export default function DashboardPage() {
               </div>
             </motion.div>
 
-            {/* Activity Chart (Placeholder) */}
+            {/* Activity Chart */}
             <motion.div variants={itemVariants} className="bg-white rounded-2xl shadow-xl p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-[#0F5132] flex items-center gap-2">
-                  <ArrowTrendingUpIcon className="w-5 h-5" />
-                  Aktivitas Mingguan
-                </h2>
-                <select className="text-sm border border-gray-200 rounded-lg px-3 py-1 focus:outline-none focus:border-[#0F5132]">
-                  <option>Minggu Ini</option>
-                  <option>Bulan Ini</option>
-                  <option>Tahun Ini</option>
-                </select>
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-[#0F5132] flex items-center gap-2">
+                    <ArrowTrendingUpIcon className="w-5 h-5" />
+                    Aktivitas Mingguan
+                  </h2>
+
+                  {/* Statistik Ringkas */}
+                  <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-1 text-sm">
+                      <span className="w-2 h-2 bg-[#0F5132] rounded-full"></span>
+                      <span className="text-gray-600">Total: {activityStats.totalRegistrations + activityStats.totalTracking + activityStats.totalPayments}</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      <span className="text-gray-600">Rata-rata: {activityStats.averagePerDay}/hari</span>
+                    </div>
+                    <div className="flex items-center gap-1 text-sm text-green-600">
+                      <span>↑</span>
+                      <span>+15.2% dari minggu lalu</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  {/* Metric Selector */}
+                  <select
+                    value={selectedMetric}
+                    onChange={(e) => setSelectedMetric(e.target.value)}
+                    className="text-sm border border-gray-200 rounded-lg px-3 py-1 focus:outline-none focus:border-[#0F5132]"
+                  >
+                    <option value="total">Semua Aktivitas</option>
+                    <option value="registrations">Registrasi</option>
+                    <option value="tracking">Tracking</option>
+                    <option value="payments">Pembayaran</option>
+                  </select>
+
+                  {/* Period Selector */}
+                  <select
+                    value={selectedPeriod}
+                    onChange={(e) => setSelectedPeriod(e.target.value)}
+                    className="text-sm border border-gray-200 rounded-lg px-3 py-1 focus:outline-none focus:border-[#0F5132]"
+                  >
+                    <option value="week">Minggu Ini</option>
+                    <option value="month">Bulan Ini</option>
+                    <option value="year">Tahun Ini</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Simple Bar Chart */}
-              <div className="h-40 flex items-end gap-2 mt-8">
-                {[40, 60, 45, 80, 65, 70, 55].map((height, i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                    <motion.div
-                      initial={{ height: 0 }}
-                      animate={{ height: `${height}%` }}
-                      transition={{ delay: i * 0.1, duration: 0.5 }}
-                      className="w-full bg-gradient-to-t from-[#0F5132] to-[#1B8C5E] rounded-t-lg hover:from-[#1B8C5E] hover:to-[#2BAF72] transition-all duration-300"
-                    />
-                    <span className="text-xs text-gray-500">
-                      {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'][i]}
-                    </span>
-                  </div>
-                ))}
+              {/* Legend */}
+              <div className="flex items-center gap-4 mb-4 text-xs">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-[#0F5132] rounded"></div>
+                  <span className="text-gray-600">Aktivitas {selectedMetric === 'total' ? 'Total' : selectedMetric}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 bg-gray-200 rounded"></div>
+                  <span className="text-gray-400">Rata-rata ({activityStats.averagePerDay})</span>
+                </div>
+              </div>
+
+              {/* Bar Chart */}
+              <div className="relative">
+                {/* Grid Lines */}
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  {[100, 75, 50, 25, 0].map((line) => (
+                    <div key={line} className="border-t border-gray-100 w-full h-0"></div>
+                  ))}
+                </div>
+
+                {/* Bars */}
+                <div className="h-48 flex items-end gap-2 relative z-10">
+                  {weeklyActivityData.map((day, i) => {
+                    const value = selectedMetric === 'total' ? day.total :
+                      selectedMetric === 'registrations' ? day.registrations :
+                        selectedMetric === 'tracking' ? day.tracking : day.payments;
+                    const maxValue = Math.max(...(selectedMetric === 'total' ? weeklyActivityData.map(d => d.total) :
+                      selectedMetric === 'registrations' ? weeklyActivityData.map(d => d.registrations) :
+                        selectedMetric === 'tracking' ? weeklyActivityData.map(d => d.tracking) :
+                          weeklyActivityData.map(d => d.payments)));
+                    const height = (value / maxValue) * 100;
+
+                    return (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                        {/* Tooltip on Hover */}
+                        <div className="relative">
+                          <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
+                            <div className="font-semibold">{day.day}</div>
+                            <div>Registrasi: {day.registrations}</div>
+                            <div>Tracking: {day.tracking}</div>
+                            <div>Pembayaran: {day.payments}</div>
+                            <div className="border-t border-gray-700 mt-1 pt-1 font-bold">Total: {day.total}</div>
+                          </div>
+                        </div>
+
+                        {/* Bar */}
+                        <motion.div
+                          initial={{ height: 0 }}
+                          animate={{ height: `${height}%` }}
+                          transition={{ delay: i * 0.1, duration: 0.5 }}
+                          className={`w-full rounded-t-lg transition-all duration-300 ${selectedMetric === 'registrations' ? 'bg-gradient-to-t from-[#0F5132] to-[#1B8C5E]' :
+                              selectedMetric === 'tracking' ? 'bg-gradient-to-t from-blue-500 to-blue-400' :
+                                selectedMetric === 'payments' ? 'bg-gradient-to-t from-amber-500 to-amber-400' :
+                                  'bg-gradient-to-t from-[#0F5132] to-[#1B8C5E]'
+                            }`}
+                        />
+
+                        <span className="text-xs font-medium text-gray-600">{day.day}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Summary Stats */}
+              <div className="grid grid-cols-4 gap-4 mt-8 pt-4 border-t border-gray-100">
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Registrasi</p>
+                  <p className="text-lg font-bold text-[#0F5132]">{activityStats.totalRegistrations}</p>
+                  <p className="text-xs text-green-600">+{Math.round(activityStats.totalRegistrations * 0.15)} minggu lalu</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Tracking</p>
+                  <p className="text-lg font-bold text-blue-600">{activityStats.totalTracking}</p>
+                  <p className="text-xs text-green-600">+{Math.round(activityStats.totalTracking * 0.08)} minggu lalu</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Total Pembayaran</p>
+                  <p className="text-lg font-bold text-amber-600">{activityStats.totalPayments}</p>
+                  <p className="text-xs text-green-600">+{Math.round(activityStats.totalPayments * 0.22)} minggu lalu</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-gray-500">Peak Day</p>
+                  <p className="text-lg font-bold text-purple-600">{activityStats.peakDay}</p>
+                  <p className="text-xs text-gray-400">Aktivitas tertinggi</p>
+                </div>
               </div>
             </motion.div>
           </div>

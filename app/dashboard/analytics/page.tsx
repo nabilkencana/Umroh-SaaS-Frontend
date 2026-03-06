@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
-import { analyticsService } from '@/services/analytics.service';
-import { promoService } from '@/services/promo.service';
-import { jamaahService } from '@/services/jamaah.service';
+import { mockJamaah, mockPromos, mockTenants } from '@/lib/mock-data';
 import { motion } from 'framer-motion';
 import {
   BuildingOfficeIcon,
@@ -88,65 +86,32 @@ export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('6months');
   const [selectedChart, setSelectedChart] = useState('line');
   const [isClient, setIsClient] = useState(false);
-  const [stats, setStats] = useState({
-    total_tenants: 0,
-    total_jamaah: 0,
-    total_promos: 0,
-    total_tracking_logs: 0,
-  });
-  const [loading, setLoading] = useState(true);
-
-  // Load analytics data
-  useEffect(() => {
-    const loadAnalytics = async () => {
-      try {
-        const data = await analyticsService.getDashboardStats();
-        setStats(data);
-      } catch (error) {
-        console.error('Failed to load analytics:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadAnalytics();
-  }, []);
 
   // Data untuk performa promo (dibuat di dalam komponen)
-  const [perfRows, setPerfRows] = useState<any[]>([]);
-
-  useEffect(() => {
-    const loadPromos = async () => {
-      try {
-        const promos = await promoService.getAll();
-        const rows = promos.map((promo, index) => {
-          const baseViews = 650 + (index + 1) * 137;
-          const clicks = Math.floor(baseViews * (0.28 + index * 0.03));
-          const conversion = ((clicks / baseViews) * 100).toFixed(1);
-          return {
-            id: promo.id,
-            title: promo.title,
-            views: baseViews,
-            clicks,
-            conversion,
-            revenue: baseViews * 15000
-          };
-        });
-        setPerfRows(rows);
-      } catch (error) {
-        console.error('Failed to load promos:', error);
-      }
-    };
-    loadPromos();
-  }, []);
+  const [perfRows, setPerfRows] = useState(() =>
+    mockPromos.map((promo, index) => {
+      const baseViews = 650 + (index + 1) * 137;
+      const clicks = Math.floor(baseViews * (0.28 + index * 0.03));
+      const conversion = ((clicks / baseViews) * 100).toFixed(1);
+      return {
+        id: promo.id,
+        title: promo.title,
+        views: baseViews,
+        clicks,
+        conversion,
+        revenue: baseViews * 15000 // Dummy revenue
+      };
+    })
+  );
 
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  const statsCards = [
+  const stats = [
     {
       label: 'Total Tenant',
-      value: stats.total_tenants,
+      value: mockTenants.length,
       icon: BuildingOfficeIcon,
       color: 'from-blue-600 to-blue-400',
       bgColor: 'bg-blue-50',
@@ -156,7 +121,7 @@ export default function AnalyticsPage() {
     },
     {
       label: 'Total Jamaah',
-      value: stats.total_jamaah,
+      value: mockJamaah.length,
       icon: UsersIcon,
       color: 'from-green-600 to-green-400',
       bgColor: 'bg-green-50',
@@ -166,7 +131,7 @@ export default function AnalyticsPage() {
     },
     {
       label: 'Promo Aktif',
-      value: stats.total_promos,
+      value: mockPromos.filter((p) => p.is_active).length,
       icon: TicketIcon,
       color: 'from-purple-600 to-purple-400',
       bgColor: 'bg-purple-50',
@@ -176,7 +141,7 @@ export default function AnalyticsPage() {
     },
     {
       label: 'Tracking Hari Ini',
-      value: stats.total_tracking_logs,
+      value: 12,
       icon: MapPinIcon,
       color: 'from-orange-600 to-orange-400',
       bgColor: 'bg-orange-50',
@@ -203,7 +168,7 @@ export default function AnalyticsPage() {
   };
 
   // Render versi statis untuk server
-  if (!isClient || loading) {
+  if (!isClient) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -237,39 +202,6 @@ export default function AnalyticsPage() {
 
   return (
     <DashboardLayout>
-<<<<<<< HEAD
-      
-      <div>
-        <h1 className="mb-2 text-3xl font-bold text-[#0F5132]">Analytics Dashboard</h1>
-        <p className="mb-8 text-gray-600">Ringkasan performa tenant, jamaah, dan kampanye promo.</p>
-
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {[
-            { label: 'Total Tenant', value: stats.totalTenants, style: 'from-blue-500 to-blue-600' },
-            { label: 'Total Jamaah', value: stats.totalJamaah, style: 'from-green-500 to-green-600' },
-            { label: 'Promo Aktif', value: stats.activePromos, style: 'from-purple-500 to-purple-600' },
-            { label: 'Tracking Hari Ini', value: stats.trackingToday, style: 'from-orange-500 to-orange-600' },
-          ].map((item) => (
-            <div key={item.label} className={`rounded-2xl bg-gradient-to-br ${item.style} p-6 text-white shadow-lg`}>
-              <div className="mb-4 flex items-center justify-between">
-                <span className="text-4xl">{item.icon}</span>
-                <span className="text-3xl font-bold">{item.value}</span>
-              </div>
-              <p className="text-sm text-white/90">{item.label}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mb-8 grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <div className="surface-card p-6">
-            <h2 className="mb-4 text-xl font-bold text-[#0F5132]">Pertumbuhan Jamaah</h2>
-            <div className="flex h-64 items-center justify-center rounded-xl bg-gradient-to-br from-[#0F5132]/10 to-[#1B5E20]/10">
-              <div className="text-center">
-                <div className="mb-2 text-5xl">📈</div>
-                <p className="text-gray-600">Line chart pertumbuhan bulanan</p>
-              </div>
-            </div>
-=======
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -285,7 +217,6 @@ export default function AnalyticsPage() {
             <p className="text-gray-600 mt-1">
               Ringkasan performa tenant, jamaah, dan kampanye promo
             </p>
->>>>>>> 0be8fcb4ed95dd57231a0b69fb97332892d9b791
           </div>
 
           {/* Time Range Selector */}
@@ -306,7 +237,7 @@ export default function AnalyticsPage() {
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {statsCards.map((stat, index) => {
+          {stats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <motion.div

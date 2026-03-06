@@ -12,8 +12,7 @@ const navLinks = [
 ];
 
 export default function Navbar() {
-  const [isMenuOpen, 
-    setIsMenuOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const pathname = usePathname();
 
@@ -49,22 +48,13 @@ export default function Navbar() {
     }
     return pathname.startsWith(href);
   };
-  
 
   return (
     <>
-<<<<<<< HEAD
-      <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${
-        isScrolled 
-          ? 'bg-white/95 backdrop-blur-md shadow-lg py-3 ' 
-          : 'bg-white py-4'
-      }`}>
-=======
       <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${isScrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-lg py-2'
-          : 'bg-white/80 backdrop-blur-sm py-4'
+        ? 'bg-white/95 backdrop-blur-md shadow-lg py-2'
+        : 'bg-white/80 backdrop-blur-sm py-4'
         }`}>
->>>>>>> 0be8fcb4ed95dd57231a0b69fb97332892d9b791
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             {/* Logo */}
@@ -90,8 +80,8 @@ export default function Navbar() {
                     className="relative px-4 py-2 group"
                   >
                     <span className={`relative z-10 text-sm font-medium transition-colors duration-300 ${active
-                        ? 'text-amber-600'
-                        : 'text-gray-700 group-hover:text-emerald-600'
+                      ? 'text-amber-600'
+                      : 'text-gray-700 group-hover:text-emerald-600'
                       }`}>
                       {link.label}
                     </span>
@@ -209,8 +199,8 @@ export default function Navbar() {
                           href={link.href}
                           onClick={() => setIsMenuOpen(false)}
                           className={`block px-6 py-3 transition-all duration-300 ${active
-                              ? 'bg-gradient-to-r from-emerald-50 to-amber-50 text-emerald-700 font-semibold border-l-4 border-amber-500'
-                              : 'text-gray-600 hover:bg-gray-50 hover:pl-8'
+                            ? 'bg-gradient-to-r from-emerald-50 to-amber-50 text-emerald-700 font-semibold border-l-4 border-amber-500'
+                            : 'text-gray-600 hover:bg-gray-50 hover:pl-8'
                             }`}
                         >
                           {link.label}
