@@ -251,7 +251,7 @@ export default function PromoPage() {
               </motion.p>
 
               {/* BERAKHIR DALAM */}
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.3 }}
@@ -262,8 +262,8 @@ export default function PromoPage() {
                 </p>
               </motion.div>
 
-              {/* Countdown Timer */}
-              <motion.div 
+              {/* Countdown Timer - Enhanced Version */}
+              <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.4 }}
@@ -274,16 +274,68 @@ export default function PromoPage() {
                   { label: 'Jam', value: countdown.hours },
                   { label: 'Menit', value: countdown.minutes },
                   { label: 'Detik', value: countdown.seconds },
-                ].map((item) => (
-                  <div key={item.label} className="text-center">
-                    <div className="text-4xl md:text-5xl lg:text-6xl font-black text-[#D4AF37]">
-                      {String(item.value).padStart(2, '0')}
+                ].map((item, index) => (
+                  <div key={item.label} className="text-center group">
+                    {/* Card dengan background premium */}
+                    <div className="relative">
+                      {/* Background glow effect */}
+                      <div className="absolute inset-0 bg-[#D4AF37]/20 rounded-2xl blur-xl group-hover:bg-[#D4AF37]/30 transition-all duration-300" />
+
+                      {/* Main card dengan multiple layers */}
+                      <div className="relative bg-gradient-to-b from-[#2A2A2A] to-[#1A1A1A] rounded-2xl p-4 md:p-6 min-w-[90px] md:min-w-[110px] shadow-2xl border border-[#D4AF37]/30 group-hover:border-[#D4AF37]/60 transition-all duration-300">
+
+                        {/* Inner shine effect */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-white/5 to-transparent rounded-2xl" />
+
+                        {/* Angka dengan efek 3D */}
+                        <div className="relative">
+                          {/* Shadow angka untuk efek depth */}
+                          <div className="absolute inset-0 text-4xl md:text-5xl lg:text-6xl font-black text-black/20 blur-sm translate-y-1">
+                            {String(item.value).padStart(2, '0')}
+                          </div>
+
+                          {/* Angka utama dengan gradient emas */}
+                          <div className="relative text-4xl md:text-5xl lg:text-6xl font-black bg-gradient-to-b from-[#D4AF37] to-[#B49450] bg-clip-text text-transparent drop-shadow-lg">
+                            {String(item.value).padStart(2, '0')}
+                          </div>
+                        </div>
+
+                        {/* Label dengan background transparan */}
+                        <div className="relative mt-2 text-sm md:text-base font-medium">
+                          <span className="text-white/90 group-hover:text-[#D4AF37] transition-colors duration-300">
+                            {item.label}
+                          </span>
+                        </div>
+
+                        {/* Decorative corner accents */}
+                        <div className="absolute top-2 left-2 w-4 h-4 border-t-2 border-l-2 border-[#D4AF37]/40 rounded-tl-lg" />
+                        <div className="absolute bottom-2 right-2 w-4 h-4 border-b-2 border-r-2 border-[#D4AF37]/40 rounded-br-lg" />
+                      </div>
                     </div>
-                    <div className="text-sm md:text-base text-white/80 font-medium mt-1">
-                      {item.label}
-                    </div>
+
+                    {/* Connector line untuk efek berantai (kecuali item terakhir) */}
+                    {index < 3 && (
+                      <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2">
+                        <div className="w-2 h-2 bg-[#D4AF37]/40 rounded-full" />
+                      </div>
+                    )}
                   </div>
                 ))}
+              </motion.div>
+
+              {/* Additional decorative element - Timer Progress Bar */}
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: "100%" }}
+                transition={{ delay: 0.6, duration: 0.8 }}
+                className="max-w-md mx-auto mt-8 h-1 bg-white/10 rounded-full overflow-hidden"
+              >
+                <motion.div
+                  className="h-full bg-gradient-to-r from-[#D4AF37] to-[#F5D742]"
+                  initial={{ width: "0%" }}
+                  animate={{ width: "75%" }} // Sesuaikan dengan progress timer
+                  transition={{ delay: 0.8, duration: 1 }}
+                />
               </motion.div>
 
               {/* CTA Button */}

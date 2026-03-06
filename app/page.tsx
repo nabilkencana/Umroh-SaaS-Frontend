@@ -101,14 +101,14 @@ const testimonials = [
     name: 'H. Ahmad Fauzi',
     role: 'CEO PT. Amanah Travel',
     content: 'Platform ini mengubah total cara kami mengelola perjalanan umroh. Efisiensi meningkat 40%!',
-    avatar: '/images/avatar1.jpg',
+    avatar: '/images/fotoprofile1.webp',
     rating: 5
   },
   {
     name: 'Siti Nurhaliza',
     role: 'Manager Operasional',
     content: 'Tracking real-time sangat membantu. Jamaah merasa aman dan tenang selama perjalanan.',
-    avatar: '/images/avatar2.jpg',
+    avatar: '/images/fotoprofile2.webp',
     rating: 5
   }
 ];
@@ -184,7 +184,7 @@ export default function HomePage() {
               className="space-y-8"
             >
               {/* Main Headline */}
-              <motion.h1 
+              <motion.h1
                 className="text-6xl md:text-7xl lg:text-8xl font-black leading-tight"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -196,18 +196,18 @@ export default function HomePage() {
                 </span>
               </motion.h1>
 
-              <motion.p 
+              <motion.p
                 className="text-xl md:text-2xl text-white/90 max-w-xl leading-relaxed"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                Kelola perjalanan ibadah dengan platform all-in-one. 
+                Kelola perjalanan ibadah dengan platform all-in-one.
                 Real-time tracking, analisis cerdas, dan pengalaman jamaah yang tak terlupakan.
               </motion.p>
 
               {/* Trust Indicators dengan Avatar Images */}
-              <motion.div 
+              <motion.div
                 className="flex items-center space-x-6 pt-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -276,7 +276,7 @@ export default function HomePage() {
                       <span className="font-semibold">+156% this year</span>
                     </div>
                     <div className="h-2 bg-white/20 rounded-full overflow-hidden">
-                      <motion.div 
+                      <motion.div
                         className="h-full bg-gradient-to-r from-emerald-400 to-teal-400"
                         initial={{ width: 0 }}
                         animate={{ width: '80%' }}
@@ -291,13 +291,13 @@ export default function HomePage() {
         </div>
 
         {/* Scroll Indicator */}
-        <motion.div 
+        <motion.div
           className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
         >
           <div className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center p-1">
-            <motion.div 
+            <motion.div
               className="w-1 h-2 bg-white rounded-full"
               animate={{ y: [0, 12, 0] }}
               transition={{ duration: 1.5, repeat: Infinity }}
@@ -309,7 +309,7 @@ export default function HomePage() {
       {/* Features Section */}
       <section className="relative py-32 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             className="text-center mb-20"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -343,7 +343,7 @@ export default function HomePage() {
               >
                 <div className="relative h-full bg-white rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden">
                   <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-500 ${feature.gradient}`} />
-                  
+
                   <div className={`relative mb-6 inline-flex p-4 rounded-2xl ${feature.lightBg} group-hover:scale-110 transition-transform duration-300`}>
                     {feature.icon}
                   </div>
@@ -351,7 +351,7 @@ export default function HomePage() {
                   <h3 className="text-2xl font-bold text-gray-900 mb-3 group-hover:text-emerald-600 transition-colors">
                     {feature.title}
                   </h3>
-                  
+
                   <p className="text-gray-600 leading-relaxed mb-4">
                     {feature.description}
                   </p>
@@ -372,14 +372,46 @@ export default function HomePage() {
       {/* Stats Counter Section */}
       <section className="relative py-24 bg-gradient-to-r from-emerald-600 to-teal-600 overflow-hidden">
         <div className="absolute inset-0 bg-black/10" />
-        
+
         <div className="relative container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             {[
-              { value: '500+', label: 'Travel Agents', icon: '🏢' },
-              { value: '1.2M+', label: 'Jamaah', icon: '👥' },
-              { value: '50K+', label: 'Keberangkatan', icon: '✈️' },
-              { value: '99.9%', label: 'Kepuasan', icon: '⭐' },
+              {
+                value: '500+',
+                label: 'Travel Agents',
+                icon: (
+                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                )
+              },
+              {
+                value: '1.2M+',
+                label: 'Jamaah',
+                icon: (
+                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                )
+              },
+              {
+                value: '50K+',
+                label: 'Keberangkatan',
+                icon: (
+                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                  </svg>
+                )
+              },
+              {
+                value: '99.9%',
+                label: 'Kepuasan',
+                icon: (
+                  <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                )
+              },
             ].map((stat, index) => (
               <motion.div
                 key={index}
@@ -389,8 +421,10 @@ export default function HomePage() {
                 transition={{ delay: index * 0.1, type: 'spring' }}
                 className="text-center text-white"
               >
-                <span className="text-5xl mb-4 block">{stat.icon}</span>
-                <motion.div 
+                <div className="text-5xl mb-4 flex justify-center text-white/90">
+                  {stat.icon}
+                </div>
+                <motion.div
                   className="text-5xl md:text-6xl font-black mb-2"
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -406,34 +440,70 @@ export default function HomePage() {
       </section>
 
       {/* Destinations Section */}
-      <section className="relative py-32 bg-gray-900">
-        <div className="absolute inset-0">
-          <Image
-            src="/images/makkah-pattern.jpg"
-            alt="Pattern"
-            fill
-            className="object-cover opacity-10"
-          />
+      <section className="relative py-32 bg-gradient-to-b from-gray-900 to-gray-800">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute inset-0 bg-[url('/images/makkah-pattern.jpg')] bg-repeat opacity-5" />
+
+          {/* Decorative Elements */}
+          <div className="absolute top-0 left-0 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-teal-500/10 rounded-full blur-3xl" />
+
+          {/* Mosque Silhouette Pattern */}
+          <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/20 to-transparent">
+            <div className="absolute bottom-0 left-0 right-0 flex justify-around opacity-10">
+              {[...Array(8)].map((_, i) => (
+                <div key={i} className="w-16 h-16 text-white">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2L2 7v10l10 5 10-5V7l-10-5zM6 10v5l4 2v-5l-4-2zm8-2v5l4 2V8l-4-2z" />
+                  </svg>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="relative container mx-auto px-4">
-          <motion.div 
-            className="text-center mb-16"
+          {/* Enhanced Header */}
+          <motion.div
+            className="text-center mb-20"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl md:text-6xl font-black text-white mb-4">
+
+            <h2 className="text-5xl md:text-7xl font-black text-white mb-6">
               Destinasi
               <span className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">
                 Spiritual
               </span>
             </h2>
-            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-              Dua kota suci yang menjadi pusat ibadah umat Islam di seluruh dunia
+
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto leading-relaxed">
+              Dua kota suci yang menjadi pusat ibadah umat Islam di seluruh dunia,
+              menyimpan jutaan kisah dan doa dari para peziarah
             </p>
+
+            {/* Stats Counter */}
+            <div className="flex justify-center gap-12 mt-12">
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white mb-1">1400+</div>
+                <div className="text-sm text-gray-400">Tahun Sejarah</div>
+              </div>
+              <div className="w-px h-12 bg-gray-700" />
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white mb-1">2</div>
+                <div className="text-sm text-gray-400">Kota Suci</div>
+              </div>
+              <div className="w-px h-12 bg-gray-700" />
+              <div className="text-center">
+                <div className="text-3xl font-bold text-white mb-1">Jutaan</div>
+                <div className="text-sm text-gray-400">Peziarah</div>
+              </div>
+            </div>
           </motion.div>
 
+          {/* Enhanced Cards Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
             {destinations.map((dest, index) => (
               <motion.div
@@ -443,17 +513,23 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
                 whileHover={{ scale: 1.02 }}
-                className="group relative h-[600px] rounded-3xl overflow-hidden cursor-pointer"
+                className="group relative h-[600px] rounded-3xl overflow-hidden cursor-pointer shadow-2xl"
               >
                 <Image
                   src={dest.image}
                   alt={dest.name}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="object-cover transition-transform duration-1000 group-hover:scale-110"
+                  priority={index === 0}
                 />
-                
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
 
+                {/* Enhanced Gradient Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                {/* Decorative Border */}
+                <div className="absolute inset-0 border-2 border-transparent group-hover:border-emerald-500/50 rounded-3xl transition-all duration-500" />
+
+                {/* Content */}
                 <div className="absolute inset-0 flex flex-col justify-end p-8">
                   <motion.div
                     initial={{ y: 50, opacity: 0 }}
@@ -461,34 +537,86 @@ export default function HomePage() {
                     transition={{ delay: 0.2 }}
                     className="transform translate-y-0 group-hover:-translate-y-4 transition-transform duration-500"
                   >
-                    <span className="inline-block px-4 py-2 bg-emerald-500 text-white rounded-full text-sm font-semibold mb-4">
-                      {dest.location}
-                    </span>
-                    
+                    {/* Location Badge */}
+                    <div className="flex items-center gap-2 mb-4">
+                      <span className="inline-block px-4 py-2 bg-emerald-500 text-white rounded-full text-sm font-semibold">
+                        {dest.location}
+                      </span>
+                      <span className="inline-block w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                    </div>
+
+                    {/* Title */}
                     <h3 className="text-4xl md:text-5xl font-black text-white mb-4">
                       {dest.name}
                     </h3>
 
-                    <div className="grid grid-cols-3 gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    {/* Quick Facts */}
+                    <p className="text-gray-200 mb-6 max-w-md line-clamp-2">
+                      {dest.description || "Kota suci yang menjadi kiblat doa dan harapan jutaan umat Muslim dari seluruh penjuru dunia."}
+                    </p>
+
+                    {/* Stats Grid */}
+                    <div className="grid grid-cols-3 gap-4 opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
                       {dest.stats.map((stat, idx) => (
-                        <div key={idx} className="text-center">
+                        <div
+                          key={idx}
+                          className="text-center bg-black/30 backdrop-blur-sm rounded-xl p-3 border border-white/10"
+                        >
                           <p className="text-2xl font-bold text-white">{stat.value}</p>
-                          <p className="text-sm text-white/80">{stat.label}</p>
+                          <p className="text-xs text-white/80 uppercase tracking-wider">{stat.label}</p>
                         </div>
                       ))}
                     </div>
+
+                    {/* Explore Button */}
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="mt-6 px-6 py-3 bg-white/10 backdrop-blur-sm rounded-full text-white font-semibold 
+                         border border-white/20 hover:bg-white/20 transition-all duration-300
+                         opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0
+                         flex items-center gap-2"
+                    >
+                      <span>Jelajahi {dest.name}</span>
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </motion.button>
                   </motion.div>
+                </div>
+
+                {/* Floating Mosque Icon */}
+                <div className="absolute top-6 right-6 text-white/20 group-hover:text-white/40 transition-colors">
+                  <svg className="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2L2 7v10l10 5 10-5V7l-10-5zM6 10v5l4 2v-5l-4-2zm8-2v5l4 2V8l-4-2z" />
+                  </svg>
                 </div>
               </motion.div>
             ))}
           </div>
+
+          {/* Bottom CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mt-20"
+          >
+            <div className="inline-flex items-center gap-4 bg-white/5 backdrop-blur-sm px-8 py-4 rounded-full">
+              <span className="text-gray-300">Temukan lebih banyak tentang</span>
+              <span className="text-emerald-400 font-semibold">Perjalanan Spiritual</span>
+              <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
+              </svg>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Testimonials */}
       <section className="relative py-32 bg-white">
         <div className="container mx-auto px-4">
-          <motion.div 
+          <motion.div
             className="text-center mb-16"
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -514,7 +642,7 @@ export default function HomePage() {
               >
                 <div className="bg-gray-50 rounded-3xl p-8 shadow-xl hover:shadow-2xl transition-shadow">
                   <div className="absolute top-6 right-8 text-6xl text-emerald-200/50 font-serif">"</div>
-                  
+
                   <div className="flex items-center mb-6">
                     <div className="relative w-16 h-16 rounded-full overflow-hidden">
                       <Image
@@ -529,15 +657,15 @@ export default function HomePage() {
                       <p className="text-gray-600 text-sm">{testimonial.role}</p>
                     </div>
                   </div>
-                  
+
                   <p className="text-gray-700 text-lg leading-relaxed mb-4">
                     "{testimonial.content}"
                   </p>
-                  
+
                   <div className="flex text-yellow-400">
                     {[...Array(testimonial.rating)].map((_, i) => (
                       <svg key={i} className="w-5 h-5 fill-current" viewBox="0 0 20 20">
-                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z"/>
+                        <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
                       </svg>
                     ))}
                   </div>
@@ -552,7 +680,7 @@ export default function HomePage() {
       <section className="relative py-40 overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/images/makkah-night.jpg"
+            src="/images/makkah-night2.jpg"
             alt="Makkah Night"
             fill
             className="object-cover"
@@ -570,7 +698,7 @@ export default function HomePage() {
             <h2 className="text-5xl md:text-7xl font-black text-white mb-8">
               Siap Transformasi Bisnis Umroh Anda?
             </h2>
-            
+
             <p className="text-2xl text-white/90 mb-12 max-w-2xl mx-auto">
               Bergabung dengan 500+ travel agent dan tingkatkan efisiensi operasional hingga 40%
             </p>
