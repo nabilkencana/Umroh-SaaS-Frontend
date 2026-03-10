@@ -8,7 +8,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 const navLinks = [
   { href: '/', label: 'Beranda' },
   { href: '/promo', label: 'Promo' },
-  { href: '/dashboard', label: 'Dashboard' },
 ];
 
 export default function Navbar() {
@@ -42,7 +41,7 @@ export default function Navbar() {
     };
   }, [isMenuOpen]);
 
-  const isActiveLink = (href) => {
+  const isActiveLink = (href: string) => {
     if (href === '/') {
       return pathname === href;
     }
@@ -236,7 +235,7 @@ export default function Navbar() {
                 {/* Footer */}
                 <div className="p-6 bg-gray-50 mt-auto">
                   <p className="text-xs text-gray-500 text-center">
-                    © 2024 UmrohSaaS. All rights reserved.
+                    © 2026 UmrohSaaS. All rights reserved.
                   </p>
                 </div>
               </div>

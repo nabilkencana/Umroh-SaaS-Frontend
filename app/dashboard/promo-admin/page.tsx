@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '../../components/DashboardLayout';
 import { promoService } from '@/services/promo.service';
 import { Promo } from '@/lib/types';
@@ -24,16 +25,16 @@ import {
   DocumentDuplicateIcon
 } from '@heroicons/react/24/outline';
 import { StarIcon as StarIconSolid } from '@heroicons/react/24/solid';
+import HelpTooltip from '@/app/components/ui/HelpTooltip';
 
 export default function PromoAdminPage() {
-  const [showForm, setShowForm] = useState(false);
-  const [editingPromo, setEditingPromo] = useState<Promo | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
   const [promos, setPromos] = useState<Promo[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   // Load promos from backend
   useEffect(() => {
@@ -60,13 +61,16 @@ export default function PromoAdminPage() {
   );
 
   const handleEdit = (promo: Promo) => {
-    setEditingPromo(promo);
-    setShowForm(true);
+    router.push(`/dashboard/promo-admin/edit/${promo.id}`);
   };
 
   const handleDelete = (promo: Promo) => {
     setSelectedPromo(promo);
     setShowDeleteModal(true);
+  };
+
+  const handleCreate = () => {
+    router.push('/dashboard/promo-admin/create');
   };
 
   const confirmDelete = async () => {
@@ -76,15 +80,24 @@ export default function PromoAdminPage() {
       await loadPromos();
       setShowDeleteModal(false);
       setSelectedPromo(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to delete promo:', error);
-      alert('Gagal menghapus promo');
-    }
-  };
 
-  const handleCloseForm = () => {
-    setShowForm(false);
-    setEditingPromo(null);
+      // Better error message
+      if (error.response?.status === 401) {
+        alert('Sesi Anda telah berakhir. Silakan login kembali.');
+        // Redirect to login
+        if (typeof window !== 'undefined') {
+          window.location.href = '/dashboard/login';
+        }
+      } else if (error.response?.status === 404) {
+        alert('Promo tidak ditemukan atau sudah dihapus.');
+        await loadPromos(); // Refresh list
+        setShowDeleteModal(false);
+      } else {
+        alert('Gagal menghapus promo. Silakan coba lagi.');
+      }
+    }
   };
 
   // Format date helper
@@ -148,166 +161,6 @@ export default function PromoAdminPage() {
     </AnimatePresence>
   );
 
-  // Promo Form Modal
-  const PromoFormModal = () => (
-    <AnimatePresence>
-      {showForm && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto"
-          onClick={handleCloseForm}
-        >
-          <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl max-w-2xl w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#0F5132]">
-                  {editingPromo ? 'Edit Promo' : 'Tambah Promo Baru'}
-                </h2>
-                <button
-                  onClick={handleCloseForm}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <XMarkIcon className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Judul Promo
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={editingPromo?.title}
-                    placeholder="Contoh: Promo Ramadhan Berkah"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Kode Promo
-                  </label>
-                  <input
-                    type="text"
-                    defaultValue={editingPromo?.code}
-                    placeholder="RAMADHAN2026"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Diskon (%)
-                  </label>
-                  <input
-                    type="number"
-                    defaultValue={editingPromo?.discount_percentage}
-                    placeholder="25"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tanggal Mulai
-                  </label>
-                  <input
-                    type="date"
-                    defaultValue={editingPromo?.start_date}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tanggal Berakhir
-                  </label>
-                  <input
-                    type="date"
-                    defaultValue={editingPromo?.end_date}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Maksimal Penggunaan
-                  </label>
-                  <input
-                    type="number"
-                    defaultValue={editingPromo?.max_uses}
-                    placeholder="100"
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Deskripsi Promo
-                  </label>
-                  <textarea
-                    rows={3}
-                    defaultValue={editingPromo?.description}
-                    placeholder="Deskripsi detail tentang promo..."
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div className="md:col-span-2 flex items-center gap-4">
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      defaultChecked={editingPromo?.is_active}
-                      className="w-4 h-4 text-[#0F5132] rounded focus:ring-[#0F5132]"
-                    />
-                    <span className="text-sm text-gray-700">Aktif</span>
-                  </label>
-
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      defaultChecked={editingPromo?.is_featured}
-                      className="w-4 h-4 text-[#D4AF37] rounded focus:ring-[#D4AF37]"
-                    />
-                    <span className="text-sm text-gray-700">Featured</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-              <div className="flex gap-3">
-                <button
-                  onClick={handleCloseForm}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={handleCloseForm}
-                  className="flex-1 px-4 py-2 bg-[#0F5132] text-white rounded-xl hover:bg-[#1B8C5E] transition-colors"
-                >
-                  {editingPromo ? 'Update Promo' : 'Simpan Promo'}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-
   if (loading) {
     return (
       <DashboardLayout>
@@ -331,10 +184,16 @@ export default function PromoAdminPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] bg-clip-text text-transparent flex items-center gap-2">
-              <TagIcon className="w-8 h-8 text-[#0F5132]" />
-              Kelola Promo
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] bg-clip-text text-transparent flex items-center gap-2">
+                <TagIcon className="w-8 h-8 text-[#0F5132]" />
+                Kelola Promo
+              </h1>
+              <HelpTooltip
+                content="Kelola promo dan diskon untuk jamaah. Buat promo baru, edit promo yang ada, atau hapus promo yang sudah tidak berlaku."
+                position="right"
+              />
+            </div>
             <p className="text-gray-600 mt-1">
               Buat, evaluasi, dan update kampanye promo dengan cepat
             </p>
@@ -343,7 +202,7 @@ export default function PromoAdminPage() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => setShowForm(true)}
+            onClick={handleCreate}
             className="px-6 py-3 bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] text-white rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-[#0F5132]/20"
           >
             <PlusIcon className="w-5 h-5" />
@@ -401,7 +260,7 @@ export default function PromoAdminPage() {
               <div>
                 <p className="text-xs text-gray-500">Rata-rata Diskon</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {Math.round(promos.reduce((acc, p) => acc + p.discount_percentage, 0) / promos.length)}%
+                  {Math.round(promos.reduce((acc, p) => acc + (p.discount_percentage || 0), 0) / (promos.length || 1))}%
                 </p>
               </div>
               <div className="p-2 bg-purple-100 rounded-lg">
@@ -452,8 +311,6 @@ export default function PromoAdminPage() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-white">Promo</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-white">Diskon</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-white">Periode</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white">Kode</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-white">Penggunaan</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-white">Status</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-white">Aksi</th>
                 </tr>
@@ -497,33 +354,6 @@ export default function PromoAdminPage() {
                           <div>
                             <p>{formatDate(promo.start_date)}</p>
                             <p className="text-gray-400">s/d {formatDate(promo.end_date)}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        {promo.code ? (
-                          <div className="flex items-center gap-2">
-                            <code className="px-2 py-1 bg-gray-100 rounded text-sm font-mono">
-                              {promo.code}
-                            </code>
-                            <button className="text-gray-400 hover:text-gray-600">
-                              <DocumentDuplicateIcon className="w-4 h-4" />
-                            </button>
-                          </div>
-                        ) : (
-                          <span className="text-sm text-gray-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div>
-                          <p className="text-sm font-medium">
-                            {promo.used_count || 0} / {promo.max_uses || '∞'}
-                          </p>
-                          <div className="w-20 h-1.5 bg-gray-200 rounded-full mt-1">
-                            <div
-                              className="h-full bg-[#0F5132] rounded-full"
-                              style={{ width: `${promo.max_uses ? ((promo.used_count || 0) / promo.max_uses) * 100 : 0}%` }}
-                            />
                           </div>
                         </div>
                       </td>
@@ -614,7 +444,6 @@ export default function PromoAdminPage() {
         )}
 
         {/* Modals */}
-        <PromoFormModal />
         <DeleteModal />
       </motion.div>
     </DashboardLayout>

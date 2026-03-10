@@ -11,7 +11,7 @@ import { promoService } from '@/services/promo.service';
 import { Promo } from '@/lib/types';
 
 // Fungsi helper untuk format Rupiah dengan aman
-const formatRupiah = (value) => {
+const formatRupiah = (value: number | undefined) => {
   if (!value || isNaN(value)) return 'Rp 34.000.000'; // Default value jika input tidak valid
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -22,7 +22,7 @@ const formatRupiah = (value) => {
 };
 
 // Komponen PromoCard yang diperbaiki dengan ukuran seragam
-const PromoCard = ({ promo }) => {
+const PromoCard = ({ promo }: { promo: any }) => {
   const [timeRemaining, setTimeRemaining] = useState('');
 
   useEffect(() => {
@@ -67,8 +67,8 @@ const PromoCard = ({ promo }) => {
         {/* Image Container */}
         <div className="relative h-48 w-full overflow-hidden">
           <Image
-            src="/images/makkah-hero.webp"
-            alt="Makkah Background"
+            src={promo.banner_image || "/images/makkah-hero.webp"}
+            alt={promo.title || "Promo Banner"}
             fill
             className="object-cover group-hover:scale-105 transition-transform duration-300"
             priority
@@ -98,9 +98,9 @@ const PromoCard = ({ promo }) => {
         <div className="flex-1 p-5 flex flex-col">
           {/* Tenant Name */}
           <div className="flex items-center gap-2 mb-2">
-            {tenant?.logo ? (
+            {(tenant as any)?.logo ? (
               <div className="relative w-5 h-5 rounded-full overflow-hidden">
-                <Image src={tenant.logo} alt={tenant.name} fill className="object-cover" />
+                <Image src={(tenant as any).logo} alt={tenant?.name || 'Tenant'} fill className="object-cover" />
               </div>
             ) : (
               <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-xs text-emerald-700">
@@ -200,7 +200,7 @@ export default function PromoPage() {
 
     const updateCountdown = () => {
       const now = Date.now();
-      const end = new Date(featuredPromo.end_date).getTime();
+      const end = new Date(featuredPromo.end_date || Date.now()).getTime();
       const distance = Math.max(end - now, 0);
 
       setCountdown({
@@ -241,8 +241,8 @@ export default function PromoPage() {
           {/* Background Image */}
           <div className="absolute inset-0">
             <Image
-              src="/images/makkah-hero.webp"
-              alt="Makkah Background"
+              src={featuredPromo.banner_image || "/images/makkah-hero.webp"}
+              alt={featuredPromo.title || "Featured Promo"}
               fill
               className="object-cover"
               priority

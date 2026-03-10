@@ -16,19 +16,18 @@ import {
   PhoneIcon,
   IdentificationIcon,
   EnvelopeIcon,
-  CalendarIcon,
   MapPinIcon,
   XMarkIcon,
   CheckCircleIcon,
   XCircleIcon,
   ClockIcon,
-  FunnelIcon,
   ArrowPathIcon,
   DocumentDuplicateIcon,
   PrinterIcon,
-  ArrowDownTrayIcon, // Ganti DownloadIcon dengan ArrowDownTrayIcon
+  ArrowDownTrayIcon,
   UserGroupIcon
 } from '@heroicons/react/24/outline';
+import HelpTooltip from '@/app/components/ui/HelpTooltip';
 
 export default function JamaahPage() {
   const router = useRouter();
@@ -38,8 +37,6 @@ export default function JamaahPage() {
   const [selectedJamaah, setSelectedJamaah] = useState<Jamaah | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Load jamaah from backend
@@ -71,6 +68,159 @@ export default function JamaahPage() {
     }
   };
 
+  const handleExportCSV = () => {
+    try {
+      // Prepare CSV headers
+      const headers = [
+        'NO',
+        'NAMA LENGKAP',
+        'NO PASPOR',
+        'NO KTP',
+        'TELEPON',
+        'EMAIL',
+        'TANGGAL LAHIR',
+        'ALAMAT',
+        'STATUS',
+        'STATUS VERIFIKASI',
+        'TANGGAL DAFTAR'
+      ];
+
+      // Prepare CSV rows
+      const rows = filteredJamaah.map((jamaah, index) => {
+        return [
+          index + 1,
+          jamaah.full_name || '-',
+          jamaah.passport_number || '-',
+          jamaah.ktp_number || '-',
+          jamaah.phone || '-',
+          jamaah.email || '-',
+          jamaah.birth_date || '-',
+          jamaah.address || '-',
+          getStatusText(jamaah.status),
+          (jamaah as any).verification_status || 'pending',
+          new Date(jamaah.created_at).toLocaleDateString('id-ID')
+        ];
+      });
+
+      // Create CSV content
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row =>
+          row.map(cell => {
+            const cellStr = String(cell);
+            if (cellStr.includes(',') || cellStr.includes('"') || cellStr.includes('\n')) {
+              return `"${cellStr.replace(/"/g, '""')}"`;
+            }
+            return cellStr;
+          }).join(',')
+        )
+      ].join('\n');
+
+      // Create filename
+      const timestamp = new Date().toLocaleDateString('id-ID').replace(/\//g, '-');
+      const filename = `Data-Jamaah_${timestamp}_${filteredJamaah.length}jamaah.csv`;
+
+      // Create blob and download
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      alert(`✅ Berhasil mengekspor ${filteredJamaah.length} data jamaah!`);
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      alert('❌ Gagal mengekspor data!');
+    }
+  };
+
+  const handlePrint = () => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Popup diblokir! Mohon izinkan popup untuk print.');
+      return;
+    }
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Data Jamaah - ${new Date().toLocaleDateString('id-ID')}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 20px; }
+          h1 { color: #0F5132; text-align: center; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+          th { background-color: #0F5132; color: white; }
+          tr:nth-child(even) { background-color: #f9f9f9; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .footer { margin-top: 20px; text-align: center; font-size: 12px; color: #666; }
+          @media print {
+            button { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Data Jamaah</h1>
+          <p>Tanggal Cetak: ${new Date().toLocaleDateString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}</p>
+          <p>Total: ${filteredJamaah.length} jamaah</p>
+        </div>
+        
+        <table>
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>Nama Lengkap</th>
+              <th>No. Paspor</th>
+              <th>Telepon</th>
+              <th>Email</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${filteredJamaah.map((jamaah, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${jamaah.full_name}</td>
+                <td>${jamaah.passport_number}</td>
+                <td>${jamaah.phone}</td>
+                <td>${jamaah.email || '-'}</td>
+                <td>${getStatusText(jamaah.status)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        
+        <div class="footer">
+          <p>Dokumen ini dicetak secara otomatis dari sistem manajemen jamaah</p>
+        </div>
+        
+        <script>
+          window.onload = function() {
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+  };
+
   const filteredJamaah = jamaahList.filter(
     (j) =>
       (j.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -87,7 +237,6 @@ export default function JamaahPage() {
       color: 'from-blue-600 to-blue-400',
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600',
-      change: '+12'
     },
     {
       label: 'Jamaah Aktif',
@@ -96,7 +245,6 @@ export default function JamaahPage() {
       color: 'from-green-600 to-green-400',
       bgColor: 'bg-green-50',
       textColor: 'text-green-600',
-      change: '+8'
     },
     {
       label: 'Jamaah Inactive',
@@ -105,7 +253,6 @@ export default function JamaahPage() {
       color: 'from-yellow-600 to-yellow-400',
       bgColor: 'bg-yellow-50',
       textColor: 'text-yellow-600',
-      change: '-3'
     },
     {
       label: 'Dalam Perjalanan',
@@ -114,7 +261,6 @@ export default function JamaahPage() {
       color: 'from-purple-600 to-purple-400',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
-      change: '+5'
     },
   ];
 
@@ -235,8 +381,8 @@ export default function JamaahPage() {
                     <span className="text-xs">Status Verifikasi</span>
                   </div>
                   <p className={`font-semibold capitalize ${(selectedJamaah as any).verification_status === 'verified' ? 'text-green-600' :
-                      (selectedJamaah as any).verification_status === 'rejected' ? 'text-red-600' :
-                        'text-yellow-600'
+                    (selectedJamaah as any).verification_status === 'rejected' ? 'text-red-600' :
+                      'text-yellow-600'
                     }`}>
                     {(selectedJamaah as any).verification_status || 'pending'}
                   </p>
@@ -306,7 +452,7 @@ export default function JamaahPage() {
                 <button
                   onClick={() => {
                     setShowDetailModal(false);
-                    setShowEditModal(true);
+                    router.push(`/dashboard/jamaah/edit/${selectedJamaah.id}`);
                   }}
                   className="flex-1 px-4 py-2 bg-[#0F5132] text-white rounded-xl hover:bg-[#1B8C5E] transition-colors"
                 >
@@ -371,160 +517,7 @@ export default function JamaahPage() {
     </AnimatePresence>
   );
 
-  // Add/Edit Modal
-  const JamaahFormModal = ({ isEdit = false }) => (
-    <AnimatePresence>
-      {(showAddModal || showEditModal) && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto"
-          onClick={() => {
-            setShowAddModal(false);
-            setShowEditModal(false);
-          }}
-        >
-          <motion.div
-            initial={{ scale: 0.9, y: 20 }}
-            animate={{ scale: 1, y: 0 }}
-            exit={{ scale: 0.9, y: 20 }}
-            className="bg-white rounded-2xl max-w-2xl w-full"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="p-6 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold text-[#0F5132]">
-                  {isEdit ? 'Edit Jamaah' : 'Tambah Jamaah Baru'}
-                </h2>
-                <button
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setShowEditModal(false);
-                  }}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                >
-                  <XMarkIcon className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-            </div>
 
-            <div className="p-6 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nama Lengkap
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Masukkan nama lengkap"
-                    defaultValue={isEdit ? selectedJamaah?.full_name : ''}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    No. Paspor
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="A1234567"
-                    defaultValue={isEdit ? selectedJamaah?.passport_number : ''}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Telepon
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="08123456789"
-                    defaultValue={isEdit ? selectedJamaah?.phone : ''}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="email@example.com"
-                    defaultValue={isEdit ? selectedJamaah?.email : ''}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Tanggal Lahir
-                  </label>
-                  <input
-                    type="date"
-                    defaultValue={isEdit ? selectedJamaah?.birth_date : ''}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Alamat
-                  </label>
-                  <textarea
-                    rows={3}
-                    placeholder="Masukkan alamat lengkap"
-                    defaultValue={isEdit ? selectedJamaah?.address : ''}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Status
-                  </label>
-                  <select
-                    defaultValue={isEdit ? selectedJamaah?.status : 'active'}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-                  >
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Nonaktif</option>
-                    <option value="in_trip">Dalam Perjalanan</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-6 border-t border-gray-100 bg-gray-50 rounded-b-2xl">
-              <div className="flex gap-3">
-                <button
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setShowEditModal(false);
-                  }}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-100 transition-colors"
-                >
-                  Batal
-                </button>
-                <button
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setShowEditModal(false);
-                  }}
-                  className="flex-1 px-4 py-2 bg-[#0F5132] text-white rounded-xl hover:bg-[#1B8C5E] transition-colors"
-                >
-                  {isEdit ? 'Update Data' : 'Simpan Data'}
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
 
   if (loading) {
     return (
@@ -549,26 +542,44 @@ export default function JamaahPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] bg-clip-text text-transparent flex items-center gap-2">
-              <UsersIcon className="w-8 h-8 text-[#0F5132]" />
-              Manajemen Jamaah
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-3xl font-bold bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] bg-clip-text text-transparent flex items-center gap-2">
+                <UsersIcon className="w-8 h-8 text-[#0F5132]" />
+                Manajemen Jamaah
+              </h1>
+              <HelpTooltip
+                content="Kelola data jamaah, tambah, edit, hapus, dan verifikasi jamaah. Gunakan filter untuk mencari jamaah berdasarkan status."
+                position="right"
+              />
+            </div>
             <p className="text-gray-600 mt-1">
               Kelola data jamaah dengan pencarian cepat dan status terkini
             </p>
           </div>
 
           <div className="flex gap-2">
-            <button className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-              <ArrowDownTrayIcon className="w-5 h-5 text-gray-600" />
-            </button>
-            <button className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-              <PrinterIcon className="w-5 h-5 text-gray-600" />
-            </button>
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/dashboard/jamaah/daftar')}
+              onClick={handleExportCSV}
+              className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              title="Export ke CSV"
+            >
+              <ArrowDownTrayIcon className="w-5 h-5 text-gray-600" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={handlePrint}
+              className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors"
+              title="Print Data"
+            >
+              <PrinterIcon className="w-5 h-5 text-gray-600" />
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push('/dashboard/jamaah/create')}
               className="px-6 py-3 bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] text-white rounded-xl font-semibold flex items-center gap-2 shadow-lg shadow-[#0F5132]/20"
             >
               <PlusIcon className="w-5 h-5" />
@@ -594,7 +605,6 @@ export default function JamaahPage() {
                   <div>
                     <p className="text-sm text-gray-500 mb-1">{stat.label}</p>
                     <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
-                    <p className="text-xs text-green-600 mt-2">{stat.change} bulan ini</p>
                   </div>
                   <div className={`${stat.bgColor} p-3 rounded-lg`}>
                     <Icon className={`w-5 h-5 ${stat.textColor}`} />
@@ -608,31 +618,55 @@ export default function JamaahPage() {
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Cari nama, nomor paspor, atau telepon..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
-            />
+            <div className="flex items-center gap-2">
+              <MagnifyingGlassIcon className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Cari nama, nomor paspor, atau telepon..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] transition-colors"
+              />
+              <HelpTooltip
+                content="Cari jamaah berdasarkan nama, nomor paspor, atau nomor telepon. Pencarian bersifat case-insensitive."
+                position="top"
+              />
+            </div>
           </div>
 
           <div className="flex gap-2">
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] bg-white"
-            >
-              <option value="all">Semua Status</option>
-              <option value="active">Aktif</option>
-              <option value="inactive">Nonaktif</option>
-              <option value="in_trip">Dalam Perjalanan</option>
-            </select>
+            <div className="relative">
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:border-[#0F5132] bg-white"
+              >
+                <option value="all">Semua Status</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Nonaktif</option>
+                <option value="in_trip">Dalam Perjalanan</option>
+              </select>
+              <HelpTooltip
+                content="Filter jamaah berdasarkan status: Aktif, Nonaktif, atau Dalam Perjalanan."
+                position="top"
+                className="absolute right-2 top-1/2 -translate-y-1/2"
+              />
+            </div>
 
-            <button className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
+            <motion.button
+              whileHover={{ scale: 1.05, rotate: 180 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={loadJamaah}
+              className="p-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all duration-300 relative"
+              title="Refresh Data"
+            >
               <ArrowPathIcon className="w-5 h-5 text-gray-600" />
-            </button>
+              <HelpTooltip
+                content="Refresh data jamaah dari server untuk mendapatkan data terbaru."
+                position="top"
+                className="absolute -top-1 -right-1"
+              />
+            </motion.button>
           </div>
         </div>
 
@@ -714,10 +748,7 @@ export default function JamaahPage() {
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => {
-                              setSelectedJamaah(jamaah);
-                              setShowEditModal(true);
-                            }}
+                            onClick={() => router.push(`/dashboard/jamaah/edit/${jamaah.id}`)}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Edit"
                           >
@@ -785,8 +816,6 @@ export default function JamaahPage() {
         {/* Modals */}
         <DetailModal />
         <DeleteModal />
-        <JamaahFormModal isEdit={false} />
-        <JamaahFormModal isEdit={true} />
       </motion.div>
     </DashboardLayout>
   );

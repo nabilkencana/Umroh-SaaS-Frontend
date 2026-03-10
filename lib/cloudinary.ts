@@ -1,52 +1,76 @@
-// Cloudinary upload utility
-export async function uploadToCloudinary(file: File, folder: string): Promise<string> {
-    const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
-
-    // Check if Cloudinary is configured
-    if (!cloudName || !uploadPreset || cloudName === 'your_cloud_name' || uploadPreset === 'your_upload_preset') {
-        console.warn('Cloudinary not configured, skipping upload');
-        return ''; // Return empty string if not configured
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('upload_preset', uploadPreset);
-    formData.append('folder', `jamaah-documents/${folder}`);
-
+// lib/cloudinary.ts
+export async function uploadToCloudinary(
+    file: File,
+    folder: string,
+    uploadPreset?: string
+): Promise<string> {
     try {
-        const response = await fetch(
-            `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-            {
-                method: 'POST',
-                body: formData,
-            }
-        );
+        const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+        const preset = uploadPreset || process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
+        // Validasi konfigurasi
+        if (!cloudName) {
+            throw new Error('CLOUDINARY_CLOUD_NAME is not configured');
+        }
+        if (!preset) {
+            throw new Error('CLOUDINARY_UPLOAD_PRESET is not configured');
+        }
+
+        console.log('🔄 Uploading to Cloudinary...', {
+            cloudName,
+            preset,
+            folder,
+            fileName: file.name,
+            fileSize: `${(file.size / 1024 / 1024).toFixed(2)}MB`
+        });
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('upload_preset', preset);
+        formData.append('folder', `umroh-manager/${folder}`);
+
+        const uploadUrl = `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`;
+
+        const response = await fetch(uploadUrl, {
+            method: 'POST',
+            body: formData,
+        });
+
+        // Log response untuk debugging
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
 
         if (!response.ok) {
-            const errorData = await response.json();
-            console.error('Cloudinary upload error:', errorData);
-
-            // If preset error, just skip upload
-            if (errorData.error?.message?.includes('preset')) {
-                console.warn('Cloudinary preset not configured correctly, skipping upload');
-                return '';
+            let errorData;
+            try {
+                errorData = await response.json();
+            } catch (e) {
+                errorData = { error: { message: 'Failed to parse error response' } };
             }
 
-            throw new Error(`Upload failed: ${errorData.error?.message || 'Unknown error'}`);
+            console.error('Cloudinary error details:', errorData);
+
+            // Error spesifik untuk upload preset
+            if (errorData.error?.message?.includes('preset')) {
+                throw new Error('Upload preset tidak valid. Periksa konfigurasi Cloudinary Anda.');
+            }
+
+            throw new Error(errorData.error?.message || `Upload failed with status ${response.status}`);
         }
 
         const data = await response.json();
+        console.log('✅ Upload successful:', {
+            url: data.secure_url,
+            publicId: data.public_id,
+            width: data.width,
+            height: data.height,
+            format: data.format,
+            size: `${(data.bytes / 1024 / 1024).toFixed(2)}MB`
+        });
+
         return data.secure_url;
     } catch (error) {
-        console.error('Cloudinary upload error:', error);
-        // Don't throw error, just return empty string
-        return '';
+        console.error('❌ Cloudinary upload failed:', error);
+        throw error; // Throw error untuk dihandle di component
     }
-}
-
-// Delete file from Cloudinary (optional)
-export async function deleteFromCloudinary(publicId: string): Promise<void> {
-    // This requires backend implementation with Cloudinary API secret
-    console.log('Delete file:', publicId);
 }

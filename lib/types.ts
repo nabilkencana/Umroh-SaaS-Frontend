@@ -70,6 +70,8 @@ export interface Promo {
     tenant_id?: string;
     is_featured: boolean;
     is_active: boolean;
+    views?: number;
+    clicks?: number;
     created_at: string;
     updated_at: string;
 }

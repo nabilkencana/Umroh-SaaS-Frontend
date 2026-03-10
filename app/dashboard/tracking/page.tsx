@@ -24,6 +24,7 @@ import {
   Battery100Icon,
   WifiIcon
 } from '@heroicons/react/24/outline';
+import HelpTooltip from '@/app/components/ui/HelpTooltip';
 
 // Dynamic import untuk Leaflet (karena perlu window object)
 const MapWithNoSSR = dynamic(
@@ -79,22 +80,61 @@ export default function TrackingPage() {
           trackingService.getAll()
         ]);
 
+        console.log('📊 Jamaah data from backend:', jamaahData.length);
+
+        // If no data, create dummy data for demo
+        let dataToUse = jamaahData;
+        if (jamaahData.length === 0) {
+          console.log('⚠️ No jamaah data, creating dummy data for demo...');
+          dataToUse = [
+            { id: 'demo-1', full_name: 'Ahmad Fauzi', status: 'active' },
+            { id: 'demo-2', full_name: 'Siti Aminah', status: 'active' },
+            { id: 'demo-3', full_name: 'Budi Santoso', status: 'active' },
+            { id: 'demo-4', full_name: 'Rina Wati', status: 'active' },
+            { id: 'demo-5', full_name: 'Muhammad Ali', status: 'active' },
+            { id: 'demo-6', full_name: 'Fatimah Zahra', status: 'active' },
+            { id: 'demo-7', full_name: 'Umar Bakri', status: 'active' },
+            { id: 'demo-8', full_name: 'Khadijah', status: 'active' },
+          ] as any[];
+        }
+
         // Create tracking data from jamaah and latest tracking logs
-        const tracking = jamaahData.map((j) => {
+        const tracking = dataToUse.map((j, index) => {
           const latestLog = trackingLogs.find(log => log.jamaah_id === j.id);
+
+          // Distribute jamaah realistically across locations
+          let baseLat, baseLng;
+          const rand = Math.random();
+
+          if (rand < 0.6) {
+            // 60% in Makkah area
+            baseLat = SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat;
+            baseLng = SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lng;
+          } else if (rand < 0.9) {
+            // 30% in Madinah area
+            baseLat = SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lat;
+            baseLng = SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lng;
+          } else {
+            // 10% in transit or other locations
+            baseLat = SPIRITUAL_LOCATIONS.JABAL_RAHMAH.lat;
+            baseLng = SPIRITUAL_LOCATIONS.JABAL_RAHMAH.lng;
+          }
+
           return {
             jamaah_id: j.id,
             name: j.full_name,
-            latitude: latestLog?.latitude || SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat + (Math.random() - 0.5) * 0.1,
-            longitude: latestLog?.longitude || SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lng + (Math.random() - 0.5) * 0.1,
+            latitude: latestLog?.latitude || baseLat + (Math.random() - 0.5) * 0.02,
+            longitude: latestLog?.longitude || baseLng + (Math.random() - 0.5) * 0.02,
             status: latestLog?.status || 'active',
             last_update: latestLog?.created_at || new Date().toISOString(),
-            accuracy: Math.floor(Math.random() * 20) + 5,
-            battery: Math.floor(Math.random() * 100),
+            accuracy: Math.floor(Math.random() * 15) + 5, // 5-20m
+            battery: Math.floor(Math.random() * 40) + 60, // 60-100%
           };
         });
 
         setTrackingData(tracking);
+        console.log('✅ Tracking data loaded:', tracking.length, 'jamaah');
+        console.log('📍 Sample coordinates:', tracking[0]);
       } catch (error) {
         console.error('Failed to load tracking data:', error);
       } finally {
@@ -147,30 +187,101 @@ export default function TrackingPage() {
     };
   }, []);
 
-  // Simulate location updates (for demo purposes)
+  // Simulate realistic location updates around spiritual locations
   useEffect(() => {
     if (!isClient) return;
 
     const interval = setInterval(() => {
       setTrackingData((prev) =>
-        prev.map((t) => ({
-          ...t,
-          latitude: t.latitude + (Math.random() - 0.5) * 0.001,
-          longitude: t.longitude + (Math.random() - 0.5) * 0.001,
-          last_update: new Date().toISOString(),
-          accuracy: Math.floor(Math.random() * 20) + 5,
-          battery: Math.max(0, Math.min(100, (t.battery || 100) - Math.random() * 2)),
-        })),
+        prev.map((t) => {
+          // Determine if jamaah is near Makkah or Madinah
+          const isNearMakkah = Math.abs(t.latitude - SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat) < 0.1;
+          const isNearMadinah = Math.abs(t.latitude - SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lat) < 0.1;
+
+          // Realistic movement: smaller movements, stay near spiritual locations
+          let newLat = t.latitude;
+          let newLng = t.longitude;
+
+          if (isNearMakkah) {
+            // Move around Masjid Al-Haram (smaller radius)
+            newLat = t.latitude + (Math.random() - 0.5) * 0.0005;
+            newLng = t.longitude + (Math.random() - 0.5) * 0.0005;
+
+            // Keep within bounds of Makkah area
+            const maxDistance = 0.05;
+            if (Math.abs(newLat - SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat) > maxDistance) {
+              newLat = SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat + (Math.random() - 0.5) * maxDistance;
+            }
+            if (Math.abs(newLng - SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lng) > maxDistance) {
+              newLng = SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lng + (Math.random() - 0.5) * maxDistance;
+            }
+          } else if (isNearMadinah) {
+            // Move around Masjid Al-Nabawi (smaller radius)
+            newLat = t.latitude + (Math.random() - 0.5) * 0.0005;
+            newLng = t.longitude + (Math.random() - 0.5) * 0.0005;
+
+            // Keep within bounds of Madinah area
+            const maxDistance = 0.05;
+            if (Math.abs(newLat - SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lat) > maxDistance) {
+              newLat = SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lat + (Math.random() - 0.5) * maxDistance;
+            }
+            if (Math.abs(newLng - SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lng) > maxDistance) {
+              newLng = SPIRITUAL_LOCATIONS.MASJID_AL_NABAWI.lng + (Math.random() - 0.5) * maxDistance;
+            }
+          } else {
+            // In transit - move slightly more
+            newLat = t.latitude + (Math.random() - 0.5) * 0.001;
+            newLng = t.longitude + (Math.random() - 0.5) * 0.001;
+          }
+
+          return {
+            ...t,
+            latitude: newLat,
+            longitude: newLng,
+            last_update: new Date().toISOString(),
+            accuracy: Math.floor(Math.random() * 15) + 5, // 5-20m accuracy
+            battery: Math.max(0, Math.min(100, (t.battery || 100) - Math.random() * 0.5)), // Slower battery drain
+          };
+        }),
       );
       setCurrentTime(new Date());
-    }, 5000);
+    }, 5000); // Update every 5 seconds
 
     return () => clearInterval(interval);
   }, [isClient]);
 
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1000);
+    try {
+      const [jamaahData, trackingLogs] = await Promise.all([
+        jamaahService.getAll(),
+        trackingService.getAll()
+      ]);
+
+      // Update tracking data with latest from backend
+      const tracking = jamaahData.map((j) => {
+        const latestLog = trackingLogs.find(log => log.jamaah_id === j.id);
+        const existingTrack = trackingData.find(t => t.jamaah_id === j.id);
+
+        return {
+          jamaah_id: j.id,
+          name: j.full_name,
+          latitude: latestLog?.latitude || existingTrack?.latitude || SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lat,
+          longitude: latestLog?.longitude || existingTrack?.longitude || SPIRITUAL_LOCATIONS.MASJID_AL_HARAM.lng,
+          status: latestLog?.status || 'active',
+          last_update: latestLog?.created_at || new Date().toISOString(),
+          accuracy: existingTrack?.accuracy || Math.floor(Math.random() * 15) + 5,
+          battery: existingTrack?.battery || Math.floor(Math.random() * 40) + 60,
+        };
+      });
+
+      setTrackingData(tracking);
+      console.log('✅ Tracking data refreshed');
+    } catch (error) {
+      console.error('Failed to refresh tracking data:', error);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 1000);
+    }
   };
 
   const jamaahDiMakkah = trackingData.filter(
@@ -196,7 +307,6 @@ export default function TrackingPage() {
       color: 'from-blue-600 to-blue-400',
       bgColor: 'bg-blue-50',
       textColor: 'text-blue-600',
-      change: '+5 hari ini'
     },
     {
       label: 'Di Makkah',
@@ -205,7 +315,6 @@ export default function TrackingPage() {
       color: 'from-emerald-600 to-emerald-400',
       bgColor: 'bg-emerald-50',
       textColor: 'text-emerald-600',
-      change: `${Math.round((jamaahDiMakkah / trackingData.length) * 100)}% dari total`
     },
     {
       label: 'Di Madinah',
@@ -214,7 +323,6 @@ export default function TrackingPage() {
       color: 'from-purple-600 to-purple-400',
       bgColor: 'bg-purple-50',
       textColor: 'text-purple-600',
-      change: `${Math.round((jamaahDiMadinah / trackingData.length) * 100)}% dari total`
     },
   ];
 
@@ -458,10 +566,16 @@ export default function TrackingPage() {
         <div className="flex flex-col gap-3">
           <div className="flex items-start justify-between">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] bg-clip-text text-transparent flex items-center gap-2">
-                <MapPinIcon className="w-6 h-6 md:w-8 md:h-8 text-[#0F5132]" />
-                <span className="text-xl md:text-3xl">Tracking</span>
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#0F5132] to-[#1B8C5E] bg-clip-text text-transparent flex items-center gap-2">
+                  <MapPinIcon className="w-6 h-6 md:w-8 md:h-8 text-[#0F5132]" />
+                  <span className="text-xl md:text-3xl">Tracking</span>
+                </h1>
+                <HelpTooltip
+                  content="Pantau posisi jamaah secara real-time di peta. Data diperbarui setiap 5 detik. Klik pada marker untuk detail."
+                  position="right"
+                />
+              </div>
               <p className="text-xs md:text-sm text-gray-600 mt-1 flex items-center gap-1 md:gap-2">
                 <SignalIcon className="w-3 h-3 md:w-4 md:h-4 text-green-500" />
                 <span className="hidden md:inline">Pantau posisi jamaah secara live</span>
@@ -508,7 +622,11 @@ export default function TrackingPage() {
                   <div>
                     <p className="text-sm text-gray-500 mb-1">{stat.label}</p>
                     <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                    <p className="text-xs text-gray-400 mt-2">{stat.change}</p>
+                    <p className="text-xs text-gray-400 mt-2">
+                      {stat.label === 'Di Makkah' && `${Math.round((stat.value / trackingData.length) * 100)}% dari total`}
+                      {stat.label === 'Di Madinah' && `${Math.round((stat.value / trackingData.length) * 100)}% dari total`}
+                      {stat.label === 'Jamaah Aktif' && 'Live tracking'}
+                    </p>
                   </div>
                   <div className={`${stat.bgColor} p-3 rounded-xl group-hover:scale-110 transition-transform`}>
                     <Icon className={`w-6 h-6 ${stat.textColor}`} />
